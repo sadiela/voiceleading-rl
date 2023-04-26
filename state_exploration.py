@@ -1,6 +1,7 @@
 
 import random
 import itertools
+import yaml
 
 bass_range = list(range(40,61))
 tenor_range = list(range(48,68)) 
@@ -102,12 +103,24 @@ chord_7_options = gen_triad_options(7, double_note=3) # DIMINISHED! Double the t
 all_chord_options = [chord_1_options, chord_2_options, chord_3_options, chord_4_options, chord_5_options, chord_6_options, chord_7_options]
 
 state_dict = {}
+state_indices = {}
+
+index = 0
+for chord_options in all_chord_options:
+    for c_opt in chord_options:
+        state_indices[index] = c_opt
+        index+=1
 
 for i, chord_options in enumerate(all_chord_options):
+    state_dict[i+1] = []
     for j, c_opt in enumerate(chord_options):
-        print(i, j, c_opt)
+        key = next(key for key, value in state_indices.items() if value == c_opt)
+        #print(i, j, c_opt)
         name = "chord_" + str(i+1) + '_' + str(j)
-        state_dict[name] = c_opt
+        state_dict[i+1].append(key)
 
-# GENERATES STATE DICTIONARY!
+with open("voicing_state_dict.yaml", 'w') as outfile:
+    yaml.dump(state_dict, outfile, default_flow_style=False)
 
+with open("voicing_state_indices.yaml", 'w') as outfile:
+    yaml.dump(state_indices, outfile, default_flow_style=False)
