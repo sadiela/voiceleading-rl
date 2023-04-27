@@ -1,4 +1,21 @@
 
+def illegal_leaps(state, next_state): 
+    bass_interval = abs(next_state[0] - state[0])
+    tenor_interval = abs(next_state[1] - state[1])
+    alto_interval = abs(next_state[2] - state[2])
+    soprano_interval = abs(next_state[3] - state[3])
+    num_leaps = 0
+
+    all_intervals = [bass_interval, tenor_interval, alto_interval, soprano_interval]
+
+    for interval in all_intervals:
+        if interval > 12:
+            num_leaps += 1
+        elif interval == 6: # augmented interval 
+            num_leaps += 1
+        elif interval == 11: # a seventh
+            num_leaps += 1
+    return num_leaps
 
 def voice_crossing(state,next_state):
     num_crosses = 0
@@ -29,14 +46,11 @@ def parallel_fifths_and_octaves(state, next_state):
     # CHECK EVERY PAIR 
     # Get intervals for each pair
     all_intervals = [bass_tenor_intervals, bass_alto_intervals, bass_soprano_intervals, tenor_alto_intervals, tenor_soprano_intervals, alto_soprano_intervals]
-    print(all_intervals)
     for interval in all_intervals:
         if interval[0] == interval[1] and interval[0] !=0: # don't care if we don't see movement or if no parallel motion
-            if interval[0]%12 == 7 and interval[1]%12 == 7:
-                print("PARALLEL 5TH")
+            if abs(interval[0])%12 == 7: # already know they're equal... and abs(interval[1])%12 == 7:
                 num_parallels+=1
-            elif interval[0]%12 ==0 and interval[1]%12 == 0:
-                print("PARALLEL 8VE")
+            elif abs(interval[0])%12 ==0: # and interval[1]%12 == 0:
                 num_parallels += 1
     return num_parallels
 

@@ -43,7 +43,9 @@ class QLearningAgent():
         # negative reward for voice crossing
         reward -= 0.2*voice_crossing(cur_start, cur_end)
         # negative reward for parallel 5ths/octaves
-        reward -= 0.1*parallel_fifths(cur_start, cur_end)
+        reward -= 0.1*parallel_fifths_and_octaves(cur_start, cur_end)
+
+        reward -= 0.2*illegal_leaps(cur_start, cur_end)
 
         return reward
 
@@ -148,11 +150,14 @@ class QLearningAgent():
         return self.computeValueFromQValues(state)
     
     def evalAgent(self, chord_progression, num_voicings, fname=None, synth=False):
-        total_reward = 0
         all_voicings = []
         for i in range(num_voicings):
             print("VOICING:", i)
             state_list = []
+            total_reward = 0
+            num_voice_crossings = 0
+            num_parallels = 0
+            num_illegal_leaps = 0
             for j, c in enumerate(chord_progression):
                 if chord_progression[j+1] == -1: # DONE WITH LOOP!
                     break
@@ -166,6 +171,10 @@ class QLearningAgent():
                 next_state = chosen_action
                 state_list.append(next_state)
 
+                num_voice_crossings += voice_crossing(self.state_indices[cur_state], self.state_indices[next_state])
+                num_parallels += parallel_fifths_and_octaves(self.state_indices[cur_state], self.state_indices[next_state])
+                num_illegal_leaps += illegal_leaps(self.state_indices[cur_state], self.state_indices[next_state])
+                
                 reward = self.calculateRewards(cur_state, chosen_action)
                 total_reward += reward
             print("Total reward and sequence:", total_reward, state_list)
@@ -174,6 +183,8 @@ class QLearningAgent():
                 all_voicings.append(state_list)
             else:
                 print("Already saved voicing")
+            print("Num voice crossings:", num_voice_crossings, "\nNum parallels:", num_parallels, "\nNum illegal leaps:", num_illegal_leaps)
+            # EVALUATE STATE LIST
 
         if synth:
             midis_to_wavs(results_dir)
@@ -184,8 +195,10 @@ agent = QLearningAgent()
 all_epochs = []
 all_penalties = []
 chord_progressions = [
-    [1, 4, 5, 1, 4, 5, 1, -1],
-    [1, 6, 2, 5, 1, -1] 
+    [1, 4, 5, 1, -1],
+    [1, 6, 2, 5, 1, -1],
+    [1, 4, 7, 3, 6, 2, 5, 1, -1],
+    [1, 6, 4, 2, 7, 5, 1,-1]
                     ]
 for chord_prog in chord_progressions:
     for i in range(1,10000):
@@ -217,4 +230,7 @@ print("EVALUATING")
 # EVALUATE
 chord_progression = [1, 4, 5, 1, -1] 
 
-agent.evalAgent(chord_progression, 5, synth=True, fname='one_four_five_one')
+
+falling_fifths = [1, 4, 7, 3, 6, 2, 5, 1, -1]
+falling_thirds = [1,6,4,2,7,5,1,-1]
+agent.evalAgent(falling_thirds, 5, synth=True, fname='falling_thirds')
