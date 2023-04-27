@@ -147,7 +147,7 @@ class QLearningAgent():
     def getValue(self, state):
         return self.computeValueFromQValues(state)
     
-    def evalAgent(self, chord_progression, num_voicings, synth=False):
+    def evalAgent(self, chord_progression, num_voicings, fname=None, synth=False):
         total_reward = 0
         all_voicings = []
         for i in range(num_voicings):
@@ -156,22 +156,21 @@ class QLearningAgent():
             for j, c in enumerate(chord_progression):
                 if chord_progression[j+1] == -1: # DONE WITH LOOP!
                     break
-                if j == 0:
-                    # choose starting state
+                if j == 0: # choose starting state
                     cur_state = self.getAction(chord_progression[j], best=True)
                     state_list.append(cur_state)
 
-                # choose an action
+                # choose an action (i.e., the next state)
                 chosen_action = self.getAction(chord_progression[j+1], cur_state, best=True)
-                # peform the chosen action and transition to the next state
+                
                 next_state = chosen_action
                 state_list.append(next_state)
 
-                reward = self.calculateRewards(cur_state, next_state)
+                reward = self.calculateRewards(cur_state, chosen_action)
                 total_reward += reward
             print("Total reward and sequence:", total_reward, state_list)
             if state_list not in all_voicings:
-                state_seq_to_MIDI(state_list, self.state_indices)
+                state_seq_to_MIDI(state_list, self.state_indices, desired_fstub=fname)
                 all_voicings.append(state_list)
             else:
                 print("Already saved voicing")
@@ -184,36 +183,38 @@ class QLearningAgent():
 agent = QLearningAgent()
 all_epochs = []
 all_penalties = []
-chord_progression = [1, 4, 5, 1, 4, 5, 1, -1] #, 6, 2, 5, 1, -1]
-for i in range(1,10000):
-    epoch_reward = 0
-    for j, c in enumerate(chord_progression):
-        if chord_progression[j+1] == -1: # DONE WITH LOOP!
-            break
-        if j == 0:
-            # choose starting state
-            cur_state = agent.getAction(chord_progression[j])
+chord_progressions = [
+    [1, 4, 5, 1, 4, 5, 1, -1],
+    [1, 6, 2, 5, 1, -1] 
+                    ]
+for chord_prog in chord_progressions:
+    for i in range(1,10000):
+        epoch_reward = 0
+        for j, c in enumerate(chord_prog):
+            if chord_prog[j+1] == -1: # DONE WITH LOOP!
+                break
+            if j == 0:
+                # choose starting state
+                cur_state = agent.getAction(chord_prog[j])
 
-        # choose an action
-        chosen_action = agent.getAction(chord_progression[j+1], cur_state)
-        # peform the chosen action and transition to the next state
-        next_state = chosen_action
+            # choose an action
+            chosen_action = agent.getAction(chord_prog[j+1], cur_state)
+            # peform the chosen action and transition to the next state
+            next_state = chosen_action
 
-        # receive reward
-        reward = agent.calculateRewards(cur_state, next_state)
-        epoch_reward += reward
-        
-        # update q_val
-        agent.update(cur_state, next_state, reward, chord_progression[j+2])
+            # receive reward
+            reward = agent.calculateRewards(cur_state, next_state)
+            epoch_reward += reward
+            
+            # update q_val
+            agent.update(cur_state, next_state, reward, chord_prog[j+2])
 
-        # if new state is terminal, go back to 1
-        # else, go to 2
-    if i % 1000 == 0:
-        print("Reward for epoch", i, ":", epoch_reward)
+        if i % 1000 == 0:
+            print("Reward for epoch", i, ":", epoch_reward)
 print(np.sum(agent.Qvalues))
 
 print("EVALUATING")
 # EVALUATE
-chord_progression = [1, 4, 5, 1, 4, 5, 1, -1] 
+chord_progression = [1, 4, 5, 1, -1] 
 
-agent.evalAgent(chord_progression, 10, synth=True)
+agent.evalAgent(chord_progression, 5, synth=True, fname='one_four_five_one')

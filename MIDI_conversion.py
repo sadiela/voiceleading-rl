@@ -26,9 +26,8 @@ def get_free_filename(stub, suffix='', date=False):
                 Path(file_candidate).mkdir()
             return file_candidate
 
-def state_seq_to_MIDI(state_seq, state_indices, desired_filename=None): 
-    if desired_filename is None: 
-        desired_filename = get_free_filename('seqmid', '.mid')
+def state_seq_to_MIDI(state_seq, state_indices, desired_fstub='seqmid'): 
+    desired_filename = get_free_filename(desired_fstub, '.mid')
     # Create a PrettyMIDI object
     midi_obj = pretty_midi.PrettyMIDI() # init tempo is 120, so a quarter note is 0.5 sec
     # Create an Instrument instance for a cello instrument

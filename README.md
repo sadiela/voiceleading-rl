@@ -37,7 +37,13 @@ Q(state,action) = Q(state,action) + self.alpha*(reward+gamma*max(Q(next_state, a
 
 In this problem, there are no actions. Another way of looking at it is the action is just what state you transition to next. 
 
-The other main difference between this problem and those covered in class is that we have rewards associated with *state pairs* instead of state action pairs. 
+The other main difference between this problem and those covered in class is that we have rewards associated with *state pairs* instead of state action pairs. A state by itself has no associated reward.
+
+We can reformulate the problem as follows:
+
+* We consider our "actions" to be the next state that agent transitions to. Thus, if there are `n` states, there are also `n` actions.
+* Our Q-value table is `nxn`
+* 
 
 
 ### Listening 
