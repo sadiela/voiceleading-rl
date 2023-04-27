@@ -48,11 +48,24 @@ def parallel_fifths_and_octaves(state, next_state):
     all_intervals = [bass_tenor_intervals, bass_alto_intervals, bass_soprano_intervals, tenor_alto_intervals, tenor_soprano_intervals, alto_soprano_intervals]
     for interval in all_intervals:
         if interval[0] == interval[1] and interval[0] !=0: # don't care if we don't see movement or if no parallel motion
-            if abs(interval[0])%12 == 7: # already know they're equal... and abs(interval[1])%12 == 7:
+            if interval[0]%12 == 7: # already know they're equal and positive... and abs(interval[1])%12 == 7:
                 num_parallels+=1
-            elif abs(interval[0])%12 ==0: # and interval[1]%12 == 0:
+            elif interval[0]%12 ==0: # and interval[1]%12 == 0:
                 num_parallels += 1
     return num_parallels
+
+def direct_fifths_octaves(state, next_state):
+    num_d5 = 0
+    bass_interval = state[0] - next_state[0]
+    soprano_interval = state[3] - next_state[3]
+    bass_soprano_interval_2 = next_state[3]-next_state[0]
+    if bass_interval != 0 and soprano_interval != 0 and (bass_interval * soprano_interval) > 0 and abs(soprano_interval) > 2:
+        # they move in the same direction, leap in the soprano part
+        if bass_soprano_interval_2%12 == 0: # move into an octave
+            num_d5 += 1
+        elif bass_soprano_interval_2%12 == 7: # move into a fifth
+            num_d5 += 1
+    return num_d5
 
 if __name__ == "__main__":
     state = [47,54,62,71]

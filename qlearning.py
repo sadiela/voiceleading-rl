@@ -41,13 +41,15 @@ class QLearningAgent():
         cur_start = self.state_indices[state]
         cur_end = self.state_indices[next_state]
         # negative reward for voice crossing
-        reward -= 0.2*voice_crossing(cur_start, cur_end)
+        voice_cross = voice_crossing(cur_start, cur_end)
         # negative reward for parallel 5ths/octaves
-        reward -= 0.1*parallel_fifths_and_octaves(cur_start, cur_end)
+        p58 = parallel_fifths_and_octaves(cur_start, cur_end)
 
-        reward -= 0.2*illegal_leaps(cur_start, cur_end)
+        ill = illegal_leaps(cur_start, cur_end)
 
-        return reward
+        d58 = direct_fifths_octaves(cur_start, cur_end)
+
+        return -.2*voice_cross + -.1*p58 + -.2*ill + -.1*d58, voice_cross, p58, ill, d58
 
     def getQValue(self, state, next_state):
         """
@@ -158,6 +160,7 @@ class QLearningAgent():
             num_voice_crossings = 0
             num_parallels = 0
             num_illegal_leaps = 0
+            num_direct = 0
             for j, c in enumerate(chord_progression):
                 if chord_progression[j+1] == -1: # DONE WITH LOOP!
                     break
@@ -171,19 +174,21 @@ class QLearningAgent():
                 next_state = chosen_action
                 state_list.append(next_state)
 
-                num_voice_crossings += voice_crossing(self.state_indices[cur_state], self.state_indices[next_state])
-                num_parallels += parallel_fifths_and_octaves(self.state_indices[cur_state], self.state_indices[next_state])
-                num_illegal_leaps += illegal_leaps(self.state_indices[cur_state], self.state_indices[next_state])
+                reward, vc,p58,il,d58 = self.calculateRewards(cur_state, chosen_action)
+                num_voice_crossings += vc
+                num_parallels += p58
+                num_illegal_leaps += il  
+                num_direct += d58
                 
-                reward = self.calculateRewards(cur_state, chosen_action)
                 total_reward += reward
+
             print("Total reward and sequence:", total_reward, state_list)
             if state_list not in all_voicings:
                 state_seq_to_MIDI(state_list, self.state_indices, desired_fstub=fname)
                 all_voicings.append(state_list)
             else:
                 print("Already saved voicing")
-            print("Num voice crossings:", num_voice_crossings, "\nNum parallels:", num_parallels, "\nNum illegal leaps:", num_illegal_leaps)
+            print("Num voice crossings:", num_voice_crossings, "\nNum parallels:", num_parallels, "\nNum illegal leaps:", num_illegal_leaps, "\nNum direct fifths/octaves", num_direct)
             # EVALUATE STATE LIST
 
         if synth:
@@ -216,7 +221,7 @@ for chord_prog in chord_progressions:
             next_state = chosen_action
 
             # receive reward
-            reward = agent.calculateRewards(cur_state, next_state)
+            reward, _,_,_,_ = agent.calculateRewards(cur_state, next_state)
             epoch_reward += reward
             
             # update q_val
