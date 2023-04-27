@@ -29,3 +29,7 @@ We define a dictionary `state_indices` that assigns an index to each voicing (as
 We define a state dictionary that contains all legal states given our problem constraints. They are organized by chord number. Thus, `state_dict[chord_num]` contains a list of legal voicing indices for the given chord.
 
 ### Algorithm
+The learning agent is defined in the `QLearningAgent` class. 
+
+
+### Listening 

@@ -1,6 +1,9 @@
 import random
 import yaml
 import numpy as np 
+from MIDI_conversion import *
+
+results_dir = './results/'
 
 def has_voice_crossing(state,next_state):
     # assumes state, next_state are LISTS!
@@ -199,12 +202,16 @@ class QLearningAgent():
                 reward = self.calculateRewards(cur_state, next_state)
                 total_reward += reward
             print("Total reward and sequence:", total_reward, state_list)
+            print("Converting state sequence to MIDI:")
+            state_seq_to_MIDI(state_list, self.state_indices)
+        midis_to_wavs(results_dir)
+
 
 ###  TRAINING LOOP ###
 agent = QLearningAgent()
 all_epochs = []
 all_penalties = []
-chord_progression = [1, 4, 5, 1, 4, 5, 1, 6, 2, 5, 1, -1]
+chord_progression = [1, 4, 5, 1, 4, 5, 1, -1] #, 6, 2, 5, 1, -1]
 for i in range(1,10000):
     epoch_reward = 0
     for j, c in enumerate(chord_progression):
@@ -232,7 +239,8 @@ for i in range(1,10000):
         print("Reward for epoch", i, ":", epoch_reward)
 print(np.sum(agent.Qvalues))
 
+print("EVALUATING")
 # EVALUATE
-chord_progression = [1, 4, 5, 1, 4, 5, 1, 6, 2, 5, 1, -1]
+chord_progression = [1, 4, 5, 1, 4, 5, 1, -1] 
 
 agent.evalAgent(chord_progression, 10)
