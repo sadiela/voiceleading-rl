@@ -29,7 +29,15 @@ We define a dictionary `state_indices` that assigns an index to each voicing (as
 We define a state dictionary that contains all legal states given our problem constraints. They are organized by chord number. Thus, `state_dict[chord_num]` contains a list of legal voicing indices for the given chord.
 
 ### Algorithm
-The learning agent is defined in the `QLearningAgent` class. 
+The learning agent is defined in the `QLearningAgent` class. The typical Q-learning update is given by:
+
+```
+Q(state,action) = Q(state,action) + self.alpha*(reward+gamma*max(Q(next_state, actions))- Q(state,action))
+```
+
+In this problem, there are no actions. Another way of looking at it is the action is just what state you transition to next. 
+
+The other main difference between this problem and those covered in class is that we have rewards associated with *state pairs* instead of state action pairs. 
 
 
 ### Listening 

@@ -2,39 +2,9 @@ import random
 import yaml
 import numpy as np 
 from MIDI_conversion import *
+from voice_leading_rules import *
 
 results_dir = './results/'
-
-def has_voice_crossing(state,next_state):
-    # assumes state, next_state are LISTS!
-    # voice cross between bass and tenor
-    if state[0] > next_state[1] or state[1] < next_state[0]:
-        return True
-    # between tenor and alto
-    if state[1] > next_state[2] or state[2] < next_state[1]:
-        return True
-    # between alto and soprano:
-    if state[2] > next_state[3] or state[3] < next_state[2]:
-        return True
-    return False
-
-def has_parallel_fifths(state, next_state):
-    # CHECK EVERY PAIR 
-    # [0,1]
-    # [0,2]
-    # [0,3]
-    # [1,2]
-    # [1,3]
-    # [2,3]
-    # Get intervals for each pair
-    bass_interval = abs(state[0] - next_state[0]) 
-    tenor_interval = abs(state[1] - next_state[1]) 
-    alto_interval = abs(state[2] - next_state[2]) 
-    soprano_interval = abs(state[3] - next_state[3]) 
-    intervals = [bass_interval, tenor_interval, alto_interval, soprano_interval]
-    if intervals.count(12) >= 2:
-        return True
-    return False
 
 def flipCoin(p):
   r = random.random()
@@ -64,20 +34,17 @@ class QLearningAgent():
             self.state_indices = yaml.safe_load(file)
 
         self.Qvalues = np.zeros((self.numStates,self.numStates))
-        # NEED TO UPDATE REWARDS MATRIX!
         
-
     def calculateRewards(self, state, next_state):
         reward = 0
         # i is starting state, j is next state
         cur_start = self.state_indices[state]
         cur_end = self.state_indices[next_state]
         # negative reward for voice crossing
-        if has_voice_crossing(cur_start, cur_end):
-            reward -= 0.2
+        reward -= 0.2*voice_crossing(cur_start, cur_end)
         # negative reward for parallel 5ths/octaves
-        if has_parallel_fifths(cur_start, cur_end):
-            reward -= 0.1
+        reward -= 0.1*parallel_fifths(cur_start, cur_end)
+
         return reward
 
     def getQValue(self, state, next_state):
@@ -93,24 +60,22 @@ class QLearningAgent():
 
     def computeValueFromQValues(self, state, next_chord):
         """
-          Returns max_action Q(state,next_state)
-          where the max is over options for next_state.  Note that if
+          Returns max_action Q(state,action)
+          where the max is over options for action.  Note that if
           there are no legal actions, which is the case at the
           terminal state, you should return a value of 0.0.
         """
-        if next_chord not in self.state_dict.keys():
+        if next_chord not in self.state_dict.keys(): # no legal actions
             return 0.0
-        next_states = self.state_dict[next_chord]
+        next_actions = self.state_dict[next_chord]
         #print("ACTIONS:", actions)
-        if next_states == None or len(next_states) == 0:
-            #print("NO LEGAL ACTIONS! (CVFQV)\n", state)
-            #input("continue...")
+        if next_actions == None or len(next_actions) == 0: # no legal actions
             return 0.0
         
         action_val_pairs = []
-        for next_state in next_states:
-            curQ = self.getQValue(state, next_state)
-            action_val_pairs.append((next_state, curQ))
+        for next_action in next_actions:
+            curQ = self.getQValue(state, next_action)
+            action_val_pairs.append((next_action, curQ))
         # sort list of tuples
         action_val_pairs.sort(key = lambda x: x[1], reverse=True) 
         return action_val_pairs[0][1] # chose max value
@@ -120,18 +85,19 @@ class QLearningAgent():
           Compute the best action to take in a state.  Note that if there
           are no legal actions, which is the case at the terminal state,
           you should return None.
+          The legal actions are determined by the next_chord argument
         """
         if next_chord not in self.state_dict.keys():
             print("NO LEGAL ACTIONS")
             return None
-        next_states = self.state_dict[next_chord]
-        if next_states == None or len(next_states) == 0:
+        next_actions = self.state_dict[next_chord]
+        if next_actions == None or len(next_actions) == 0:
             return None
         
         action_val_pairs = []
-        for next_state in next_states:
-            curQ = self.getQValue(state, next_state)
-            action_val_pairs.append((next_state, curQ))
+        for next_action in next_actions:
+            curQ = self.getQValue(state, next_action) # which transition gives highest q? 
+            action_val_pairs.append((next_action, curQ))
         # sort list of tuples
         action_val_pairs.sort(key = lambda x: x[1], reverse=True) 
 
@@ -144,6 +110,7 @@ class QLearningAgent():
           take the best policy action otherwise.  Note that if there are
           no legal actions, which is the case at the terminal state, you
           should choose None as the action.
+          Legal actions are determined by next_chord
         """
         #print(next_chord)
         if next_chord == -1:
@@ -162,17 +129,17 @@ class QLearningAgent():
                 else: 
                     return best_action
 
-    def update(self, state, next_state, reward, next_chord):
+    def update(self, state, action, reward, next_chord):
         """
           The parent class calls this to observe a
           state = action => next_state and reward transition.
           You should do your Q-Value update here
         """
-        cur_qval = self.getQValue(state, next_state)
+        cur_qval = self.getQValue(state, action)
         # HAVE A Q VAL FOR EACH STATE-STATE PAIR
-        next_best_qval = self.computeValueFromQValues(next_state, next_chord)
+        next_best_qval = self.computeValueFromQValues(action, next_chord)
         # Will just be 0 if terminal
-        self.Qvalues[(state, next_state)] = cur_qval + self.alpha*(reward + self.gamma*next_best_qval - cur_qval)
+        self.Qvalues[(state, action)] = cur_qval + self.alpha*(reward + self.gamma*next_best_qval - cur_qval)
 
     def getPolicy(self, state):
         return self.computeActionFromQValues(state)
@@ -180,8 +147,9 @@ class QLearningAgent():
     def getValue(self, state):
         return self.computeValueFromQValues(state)
     
-    def evalAgent(self, chord_progression, num_voicings):
+    def evalAgent(self, chord_progression, num_voicings, synth=False):
         total_reward = 0
+        all_voicings = []
         for i in range(num_voicings):
             print("VOICING:", i)
             state_list = []
@@ -202,9 +170,14 @@ class QLearningAgent():
                 reward = self.calculateRewards(cur_state, next_state)
                 total_reward += reward
             print("Total reward and sequence:", total_reward, state_list)
-            print("Converting state sequence to MIDI:")
-            state_seq_to_MIDI(state_list, self.state_indices)
-        midis_to_wavs(results_dir)
+            if state_list not in all_voicings:
+                state_seq_to_MIDI(state_list, self.state_indices)
+                all_voicings.append(state_list)
+            else:
+                print("Already saved voicing")
+
+        if synth:
+            midis_to_wavs(results_dir)
 
 
 ###  TRAINING LOOP ###
@@ -243,4 +216,4 @@ print("EVALUATING")
 # EVALUATE
 chord_progression = [1, 4, 5, 1, 4, 5, 1, -1] 
 
-agent.evalAgent(chord_progression, 10)
+agent.evalAgent(chord_progression, 10, synth=True)
