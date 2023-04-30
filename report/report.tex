@@ -58,6 +58,16 @@ While these assumptions do limit the overall complexity and scope of the study, 
 
 \subsection{Voice Leading Rules}
 
+In this section, we detail several important voice leading rules that our reinforcement learning model should adhere to when generating voicings for the given harmonic progression. By following these guidelines, our model can create smooth transitions between chords and ensure that each voice part maintains its independence while contributing to the overall harmony.
+
+\begin{enumerate}
+    \item \textbf{Spacing} - Keep the upper three parts (soprano, alto, and tenor) within an octave of each other. This close spacing helps maintain a sense of cohesion among the upper voices. Allow more than an octave between the tenor and bass parts, as this wider spacing can provide a stronger foundation for the harmony.
+    \item \textbf{Leaps} - Avoid leaps of 7ths and intervals larger than an octave, especially in the soprano line. Large leaps can create a disjointed melodic line and disrupt the overall sense of musical continuity.
+    \item \textbf{Voice Crossing} - Do not allow any part to cross above the soprano or below the bass. Maintaining the proper order of the voice parts is essential for preserving their independence and preventing confusion. Brief crossing of alto and tenor lines is acceptable, but it is generally better to avoid such instances to maintain the distinct identity of each part.
+    \item \textbf{Parallel 5ths and Octaves} - Parallel 5ths and octaves between the same set of voices are considered unacceptable, as they weaken the independence of the individual voice parts. However, parallel 3rds are acceptable and can contribute to a harmonically rich texture.
+    \item \textbf{Direct 5ths and Octaves} - Direct 5ths and octaves occur when the outer parts (soprano and bass) or two adjacent parts move in the same direction into a perfect fifth (P5) or perfect octave (P8) with a leap in the upper part. These instances should be avoided, as they can create a sense of harmonic blandness or weaken the independence of the voice parts.
+\end{enumerate}
+
 \section{Methods}
 
 \section{Results}
