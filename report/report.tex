@@ -25,7 +25,21 @@ By leveraging reinforcement learning, our project aims to develop a model that c
 
 This report will detail the methodology, implementation, and results of our reinforcement learning approach to harmonic progression, as well as discuss the broader implications of our findings for the future of music composition and analysis. We will begin by providing an overview of the relevant background in music theory and reinforcement learning, followed by an in-depth explanation of our proposed model and its implementation. Finally, we will present the results of our experiments and discuss their implications for the field of music theory and artificial intelligence.
 
-\section{Harmonic Progression}
+\section{Problem Formulation}
+
+Given a sequence of chords (e.g., I, vi, IV, ii), the objective is to generate 4-part voicings for each chord in the sequence. This problem can be viewed from two distinct perspectives: as a sequence of chords and as four separate musical lines, each representing one of the four voice parts (soprano, alto, tenor, and bass). While harmonic progression provides us with the notes that must be present in each chord, it does not dictate which voice part should play which note. This absence of specific guidance leads to numerous possible voicing combinations, making the problem inherently complex.
+
+\subsection{General Challenges}
+
+There are a couple of challenges involved. For example, generating 4-part voicings requires adherence to the principles of \textbf{voice leading}, which aim to create smooth and coherent transitions between successive chords. Voice leading ensures that each individual voice part maintains its independence while also contributing to the overall harmony. Complying with these principles often involves minimizing leaps, avoiding parallel fifths and octaves, and preserving common tones between chords whenever possible.
+
+In addition, different \textbf{inversions} of a chord can significantly alter the overall sound and harmonic function. For instance, a first inversion chord will have a distinct sonic character compared to its root position counterpart. The model must be capable of intelligently determining which inversion is the most appropriate for a given context, taking into consideration the surrounding chords and overall harmonic progression.
+
+Musical context is another real challenge for musicians to addreass, as the optimal 4-part voicing for a specific chord may vary depending on its context within a piece. Factors such as melody, rhythm, and texture can all influence the ideal voicing choice. However, to simplify our problem, this issue will not be tackles at the current stage. We assume that each short sequence of chords are indepent and is considered good as long as it's consistent within its own scope.
+
+\subsection{Constraints \& Simplifications}
+
+
 
 \section{Methods}
 
