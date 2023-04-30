@@ -39,7 +39,24 @@ Musical context is another real challenge for musicians to addreass, as the opti
 
 \subsection{Constraints \& Simplifications}
 
+In order to make the problem of generating 4-part voicings more manageable and computationally tractable, we introduce certain constraints and simplifications to our study. These assumptions allow us to focus on the essential aspects of the problem, while reducing the complexity of the learning task for our reinforcement learning model.
 
+\begin{enumerate}
+    \item \textbf{Fixed Harmonic Progression} - For the purpose of this study, we assume that the harmonic progression is already given and our primary objective is to provide the appropriate voicings for each chord in the sequence. This allows us to concentrate on the intricacies of voicing generation and voice leading, without the additional challenge of predicting or generating chord progressions.
+    \item \textbf{C Major Only} - To further simplify the problem, we restrict our study to the key of C major. This constraint allows us to avoid complications that arise from key changes and to focus on the fundamental principles of harmony and voice leading. Although this limitation reduces the scope of the study, the insights gained can still be applied to other keys with appropriate transposition.
+    \item \textbf{Root Position Chords} - We consider only chords in root position, meaning that the bass note of each chord is the lowest note of the chord. By excluding chord inversions, we reduce the number of possible voicings and streamline the learning process for our model. This simplification, however, comes at the cost of limiting the harmonic variety and richness that inversions can provide.
+    \item \textbf{Voice Part Range Restrictions} - In order to maintain the realism and practicality of our generated voicings, we restrict the range of each voice part as follows:
+    \begin{itemize}
+        \item Bass: E2 (MIDI note 40) to C4 (MIDI note 60)
+        \item Tenor: C3 (MIDI note 48) to G4 (MIDI note 67)
+        \item Alto: G3 (MIDI note 55) to D5 (MIDI note 74)
+        \item Soprano: C4 (MIDI note 60) to G5 (MIDI note 79)
+    \end{itemize}
+\end{enumerate}
+
+While these assumptions do limit the overall complexity and scope of the study, they allow us to focus on the core aspects of harmony and voice leading, providing valuable insights that can be further extended to more complex scenarios in future research.
+
+\subsection{Voice Leading Rules}
 
 \section{Methods}
 

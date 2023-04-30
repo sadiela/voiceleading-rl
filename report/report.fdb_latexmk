@@ -1,7 +1,9 @@
 # Fdb version 4
-["pdflatex"] 1682874661 "/home/cxue2/Dropbox/courses/ec700/voiceleading-rl/report/report.tex" "report.pdf" "report" 1682874661 0
-  "/home/cxue2/Dropbox/courses/ec700/voiceleading-rl/report/report.tex" 1682874661 4726 b728037f122284e1bcdd152437cf3eba ""
+["pdflatex"] 1682877428 "/home/cxue2/Dropbox/courses/ec700/voiceleading-rl/report/report.tex" "report.pdf" "report" 1682877428 0
+  "/home/cxue2/Dropbox/courses/ec700/voiceleading-rl/report/report.tex" 1682877427 7064 87731514c80b817cf74e1c894d83304c ""
+  "/usr/local/texlive/2023/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1136849721 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/usr/local/texlive/2023/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
+  "/usr/local/texlive/2023/texmf-dist/fonts/tfm/jknappen/ec/tcrm1200.tfm" 1136768653 1536 74b7293ec3713bb7fdca8dd1bd1f469c ""
   "/usr/local/texlive/2023/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1246382020 1004 54797486969f23fa377b128694d548df ""
   "/usr/local/texlive/2023/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam10.tfm" 1246382020 916 f87d7c45f9c908e672703b83b72241a3 ""
   "/usr/local/texlive/2023/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam7.tfm" 1246382020 928 2dc8d444221b7a635bb58038579b861a ""
@@ -16,6 +18,7 @@
   "/usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb" 1248133631 32080 340ef9bf63678554ee606688e7b5339d ""
   "/usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb" 1248133631 32722 d7379af29a190c3f453aba36302ff5a9 ""
   "/usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb" 1248133631 32362 179c33bbf43f19adbb3825bb4e36e57a ""
+  "/usr/local/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb" 1215737283 136101 f533469f523533d38317ab5729d00c8a ""
   "/usr/local/texlive/2023/texmf-dist/tex/generic/babel-english/english.ldf" 1496785618 7008 9ff5fdcc865b01beca2b0fe4a46231d4 ""
   "/usr/local/texlive/2023/texmf-dist/tex/generic/babel/babel.sty" 1680034822 151578 01e8b46843d81abdfcc7dfbcd0188e2f ""
   "/usr/local/texlive/2023/texmf-dist/tex/generic/babel/locale/en/babel-en.ini" 1661803479 3966 caeee5a9e5771d4446aa1ca9015ba1b2 ""
@@ -42,8 +45,8 @@
   "/usr/local/texlive/2023/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1680412200 4622752 02d70c555fb1ccbaa0b6f1f330ce9b3b ""
   "/usr/local/texlive/2023/texmf-var/web2c/pdftex/pdflatex.fmt" 1680412239 7885180 cb8b557e1a5f7c2e368528457ae581f6 ""
   "/usr/local/texlive/2023/texmf.cnf" 1680412196 455 5b996dcaa0eb4ef14a83b026bc0a008c ""
-  "report.aux" 1682874661 842 07d7cb6ae430b86244503e7717472cbd "pdflatex"
-  "report.tex" 1682874661 4726 b728037f122284e1bcdd152437cf3eba ""
+  "report.aux" 1682877428 954 3625ac7cd81306e4f71d6c6828e8b276 "pdflatex"
+  "report.tex" 1682877427 7064 87731514c80b817cf74e1c894d83304c ""
   (generated)
   "report.aux"
   "report.log"
