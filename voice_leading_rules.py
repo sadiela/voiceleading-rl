@@ -55,17 +55,44 @@ def parallel_fifths_and_octaves(state, next_state):
     return num_parallels
 
 def direct_fifths_octaves(state, next_state):
-    num_d5 = 0
+    num_d58 = 0
     bass_interval = state[0] - next_state[0]
+    tenor_interval = state[1] - next_state[1]
+    alto_interval = state[2] - next_state[2]
     soprano_interval = state[3] - next_state[3]
     bass_soprano_interval_2 = next_state[3]-next_state[0]
+    bass_tenor_interval_2 = next_state[1]-next_state[0]
+    tenor_alto_interval_2 = next_state[2]-next_state[1]
+    alto_soprano_interval_2 = next_state[3]-next_state[2]
+    # BASS SOP
     if bass_interval != 0 and soprano_interval != 0 and (bass_interval * soprano_interval) > 0 and abs(soprano_interval) > 2:
         # they move in the same direction, leap in the soprano part
         if bass_soprano_interval_2%12 == 0: # move into an octave
-            num_d5 += 1
+            num_d58 += 1
         elif bass_soprano_interval_2%12 == 7: # move into a fifth
-            num_d5 += 1
-    return num_d5
+            num_d58 += 1
+    # BASS TENOR
+    if bass_interval != 0 and tenor_interval != 0 and (bass_interval * tenor_interval) > 0 and abs(tenor_interval) > 2:
+        # they move in the same direction, leap in the soprano part
+        if bass_tenor_interval_2%12 == 0: # move into an octave
+            num_d58 += 1
+        elif bass_tenor_interval_2%12 == 7: # move into a fifth
+            num_d58 += 1
+    # TENOR ALTO
+    if tenor_interval != 0 and alto_interval != 0 and (tenor_interval * alto_interval) > 0 and abs(alto_interval) > 2:
+        # they move in the same direction, leap in the soprano part
+        if tenor_alto_interval_2%12 == 0: # move into an octave
+            num_d58 += 1
+        elif tenor_alto_interval_2%12 == 7: # move into a fifth
+            num_d58 += 1
+    # ALTO SOP
+    if alto_interval != 0 and soprano_interval != 0 and (alto_interval * soprano_interval) > 0 and abs(soprano_interval) > 2:
+        # they move in the same direction, leap in the soprano part
+        if alto_soprano_interval_2%12 == 0: # move into an octave
+            num_d58 += 1
+        elif alto_soprano_interval_2%12 == 7: # move into a fifth
+            num_d58 += 1    
+    return num_d58
 
 if __name__ == "__main__":
     state = [47,54,62,71]

@@ -206,7 +206,7 @@ chord_progressions = [
     [1, 6, 4, 2, 7, 5, 1,-1]
                     ]
 for chord_prog in chord_progressions:
-    for i in range(1,10000):
+    for i in range(1,100000):
         epoch_reward = 0
         for j, c in enumerate(chord_prog):
             if chord_prog[j+1] == -1: # DONE WITH LOOP!
@@ -227,7 +227,7 @@ for chord_prog in chord_progressions:
             # update q_val
             agent.update(cur_state, next_state, reward, chord_prog[j+2])
 
-        if i % 1000 == 0:
+        if i % 10000 == 0:
             print("Reward for epoch", i, ":", epoch_reward)
 print(np.sum(agent.Qvalues))
 
@@ -238,4 +238,4 @@ chord_progression = [1, 4, 5, 1, -1]
 
 falling_fifths = [1, 4, 7, 3, 6, 2, 5, 1, -1]
 falling_thirds = [1,6,4,2,7,5,1,-1]
-agent.evalAgent(falling_thirds, 5, synth=True, fname='falling_thirds')
+agent.evalAgent(falling_thirds, 5, synth=False, fname='falling_thirds')
