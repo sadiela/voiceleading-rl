@@ -78,7 +78,7 @@ def gen_triad_options(chord_num, double_note=1):
     return chord_options
 
 if __name__ == "__main__":
-    print("As:")
+    '''print("As:")
     for a in As: 
         print(pretty_midi.note_number_to_name(a))
 
@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     print("Gs:")
     for g in Gs: 
-        print(pretty_midi.note_number_to_name(g))
+        print(pretty_midi.note_number_to_name(g))'''
 
     chord_1_options = gen_triad_options(1) + gen_triad_options(1, double_note=5)
     chord_1_options.sort()
@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
     all_chord_options = [chord_1_options, chord_2_options, chord_3_options, chord_4_options, chord_5_options, chord_6_options, chord_7_options]
 
-    state_dict = {}
+    chord_dict = {}
     state_indices = {}
 
     index = 0
@@ -144,15 +144,31 @@ if __name__ == "__main__":
             index+=1
 
     for i, chord_options in enumerate(all_chord_options):
-        state_dict[i+1] = []
+        chord_dict[i+1] = []
         for j, c_opt in enumerate(chord_options):
             key = next(key for key, value in state_indices.items() if value == c_opt)
             #print(i, j, c_opt)
             name = "chord_" + str(i+1) + '_' + str(j)
-            state_dict[i+1].append(key)
+            chord_dict[i+1].append(key)
 
     with open("voicing_state_dict.yaml", 'w') as outfile:
-        yaml.dump(state_dict, outfile, default_flow_style=False)
+        yaml.dump(chord_dict, outfile, default_flow_style=False)
+    with open("chord_dict.yaml", 'w') as outfile:
+        yaml.dump(chord_dict, outfile, default_flow_style=False)
 
     with open("voicing_state_indices.yaml", 'w') as outfile:
         yaml.dump(state_indices, outfile, default_flow_style=False)
+    with open("state_dict.yaml", 'w') as outfile:
+        yaml.dump(state_indices, outfile, default_flow_style=False)
+
+    inverse_chord_dict = {}
+    for key in chord_dict:
+        print("KEY")
+        for idx in chord_dict[key]:
+            print("IDX:", idx)
+            inverse_chord_dict[idx] = key
+
+    with open("inverse_chord_dict.yaml", 'w') as outfile:
+        yaml.dump(inverse_chord_dict, outfile, default_flow_style=False)
+
+    

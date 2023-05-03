@@ -1,0 +1,28 @@
+{ 
+0: [48, 48, 55, 64],
+1: [48, 52, 55, 60],
+...
+}
+
+{
+    1: [0, 1, 2, ...]
+    2: [25, 26, 27...],
+    ...
+    7: [137, 138, 139,...]
+}
+
+for j, c in enumerate(chord_prog):
+    if j == 0:
+        cur_state = getAction(current_chord) # choose starting state
+
+    # choose an action
+    chosen_action = getAction(next_chord, current_voicing)
+    next_state = chosen_action # "action" is just what state we transition to next
+
+    # receive reward
+    reward, _,_,_,_ = agent.calculateRewards(cur_state, next_state)
+    epoch_reward += reward
+    
+    # update q_val
+    Qvalues[state, action] = Qvalues[state, action] 
+                            + alpha*(reward + gamma*next_best_qval - Qvalues[state, action])

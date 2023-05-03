@@ -9,11 +9,7 @@ def illegal_leaps(state, next_state):
     all_intervals = [bass_interval, tenor_interval, alto_interval, soprano_interval]
 
     for interval in all_intervals:
-        if interval > 12:
-            num_leaps += 1
-        elif interval == 6: # augmented interval 
-            num_leaps += 1
-        elif interval == 11: # a seventh
+        if interval > 12 or interval==6 or interval == 11:
             num_leaps += 1
     return num_leaps
 

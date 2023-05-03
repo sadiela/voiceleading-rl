@@ -3,6 +3,7 @@ import yaml
 import numpy as np 
 from MIDI_conversion import *
 from voice_leading_rules import *
+import matplotlib.pyplot as plt
 
 results_dir = './results/'
 
@@ -27,8 +28,8 @@ class QLearningAgent():
         self.Qvalues = 0 # some matrix
         self.numStates = 148
 
-        with open('voicing_state_dict.yaml', 'r') as file:
-            self.state_dict = yaml.safe_load(file)
+        with open('chord_dict.yaml', 'r') as file:
+            self.chord_dict = yaml.safe_load(file)
 
         with open('voicing_state_indices.yaml', 'r') as file:
             self.state_indices = yaml.safe_load(file)
@@ -69,9 +70,9 @@ class QLearningAgent():
           there are no legal actions, which is the case at the
           terminal state, you should return a value of 0.0.
         """
-        if next_chord not in self.state_dict.keys(): # no legal actions
+        if next_chord not in self.chord_dict.keys(): # no legal actions
             return 0.0
-        next_actions = self.state_dict[next_chord]
+        next_actions = self.chord_dict[next_chord]
         #print("ACTIONS:", actions)
         if next_actions == None or len(next_actions) == 0: # no legal actions
             return 0.0
@@ -91,10 +92,10 @@ class QLearningAgent():
           you should return None.
           The legal actions are determined by the next_chord argument
         """
-        if next_chord not in self.state_dict.keys():
+        if next_chord not in self.chord_dict.keys():
             print("NO LEGAL ACTIONS")
             return None
-        next_actions = self.state_dict[next_chord]
+        next_actions = self.chord_dict[next_chord]
         if next_actions == None or len(next_actions) == 0:
             return None
         
@@ -120,7 +121,7 @@ class QLearningAgent():
         if next_chord == -1:
             print("NO LEGAL MOVE!")
             return None
-        legal_actions = self.state_dict[next_chord]
+        legal_actions = self.chord_dict[next_chord]
         if state is None: ### INITIAL STATE, CHOOSE RANDOMLY? OR CHOOSE ONE WITH HIGHEST Q VAL ###
             return random.choice(legal_actions)
         else: 
@@ -194,8 +195,47 @@ class QLearningAgent():
         if synth:
             midis_to_wavs(results_dir)
 
+    def trainingEval(self, chord_progression, num_voicings):
+        all_voicings = []
+        all_rewards = 0
+        for i in range(num_voicings):
+            state_list = []
+            total_reward = 0
+            num_voice_crossings = 0
+            num_parallels = 0
+            num_illegal_leaps = 0
+            num_direct = 0
+            for j, c in enumerate(chord_progression):
+                if chord_progression[j+1] == -1: # DONE WITH LOOP!
+                    break
+                if j == 0: # choose starting state
+                    cur_state = self.getAction(chord_progression[j], best=True)
+                    state_list.append(cur_state)
+
+                # choose an action (i.e., the next state)
+                chosen_action = self.getAction(chord_progression[j+1], cur_state, best=True)
+                
+                next_state = chosen_action
+                state_list.append(next_state)
+
+                reward, vc,p58,il,d58 = self.calculateRewards(cur_state, chosen_action)
+                num_voice_crossings += vc
+                num_parallels += p58
+                num_illegal_leaps += il  
+                num_direct += d58
+                
+                total_reward += reward
+
+            if state_list not in all_voicings:
+                all_voicings.append(state_list)
+            all_rewards += total_reward
+
+        return all_rewards
+        
+
 
 ###  TRAINING LOOP ###
+falling_thirds = [1,6,4,2,7,5,1,-1]
 agent = QLearningAgent()
 all_epochs = []
 all_penalties = []
@@ -203,11 +243,23 @@ chord_progressions = [
     [1, 4, 5, 1, -1],
     [1, 6, 2, 5, 1, -1],
     [1, 4, 7, 3, 6, 2, 5, 1, -1],
-    [1, 6, 4, 2, 7, 5, 1,-1]
+    [1, 6, 4, 2, 7, 5, 1,-1],
+    [1,2,-1],
+    [1,3,-1],
+    [1,4,-1],
+    [1,5,-1],
+    [1,7,-1],
+    [2,5,-1],
+    [3,5,-1],
+    [4,5,-1],
+    [6,5,-1],
+    [7,5,-1],
                     ]
-for chord_prog in chord_progressions:
-    for i in range(1,100000):
-        epoch_reward = 0
+eval_rewards = []
+epoch_rewards = []
+for i in range(1,1000):
+    epoch_reward = 0
+    for chord_prog in chord_progressions:
         for j, c in enumerate(chord_prog):
             if chord_prog[j+1] == -1: # DONE WITH LOOP!
                 break
@@ -226,16 +278,25 @@ for chord_prog in chord_progressions:
             
             # update q_val
             agent.update(cur_state, next_state, reward, chord_prog[j+2])
+    
+    epoch_rewards.append(epoch_reward)
 
-        if i % 10000 == 0:
-            print("Reward for epoch", i, ":", epoch_reward)
-print(np.sum(agent.Qvalues))
+
+'''plt.plot(eval_rewards)
+plt.title("Total Reward over Epoch")
+plt.show()
+
+plt.plot(epoch_rewards)
+plt.xlabel("Training Epoch")
+plt.ylabel("Reward")
+plt.title("Total Reward over Epoch")
+plt.show()'''
 
 print("EVALUATING")
 # EVALUATE
 chord_progression = [1, 4, 5, 1, -1] 
 
 
-falling_fifths = [1, 4, 7, 3, 6, 2, 5, 1, -1]
-falling_thirds = [1,6,4,2,7,5,1,-1]
-agent.evalAgent(falling_thirds, 5, synth=False, fname='falling_thirds')
+falling_fifths = [1, 4, 7, 3,-1] #, 6, 2, 5, 1, -1]
+ex_prog = [1,2,5,1,-1]
+agent.evalAgent(ex_prog, 5, synth=True, fname='presentation_example')
