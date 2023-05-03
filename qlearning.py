@@ -31,7 +31,7 @@ class QLearningAgent():
         with open('chord_dict.yaml', 'r') as file:
             self.chord_dict = yaml.safe_load(file)
 
-        with open('voicing_state_indices.yaml', 'r') as file:
+        with open('state_dict.yaml', 'r') as file:
             self.state_indices = yaml.safe_load(file)
 
         self.Qvalues = np.zeros((self.numStates,self.numStates))
