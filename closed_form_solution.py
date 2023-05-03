@@ -87,7 +87,7 @@ if __name__ == "__main__":
     with open('chord_dict.yaml', 'r') as file:
         chord_dict = yaml.safe_load(file)
 
-    with open('voicing_state_indices.yaml', 'r') as file:
+    with open('state_dict.yaml', 'r') as file:
         state_indices = yaml.safe_load(file)
 
     with open('inverse_chord_dict.yaml', 'r') as file:
