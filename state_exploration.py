@@ -11,6 +11,7 @@ tenor_range = list(range(48,68))
 alto_range = list(range(55,75)) 
 soprano_range = list(range(60,80)) # FINAL INDICE NOT INCLUDED!
 
+# VERIFIED!
 notesets = [[], # Cs     0 (0,2,4,5,7,9,11)
             [], # C#Df   1
             [], # D      2
@@ -79,15 +80,13 @@ def determine_chord_from_voicing(voicing):
 
     # now i have list of pitches (unique)... determine the chord!
 
-
-def determine_chord_validity(cur_combo, root):
+def determine_chord_validity(cur_combo): #, root):
     # takes SORTED note list
-    if cur_combo[0] in root:
-        if cur_combo[0] in bass_range and cur_combo[1] in tenor_range and cur_combo[2] in alto_range and cur_combo[3] in soprano_range:
-            if cur_combo[2] - cur_combo[1] <= 12 and cur_combo[3] - cur_combo[2] <= 12:
-                return True
+    #if cur_combo[0] in root: #forces root position
+    if cur_combo[0] in bass_range and cur_combo[1] in tenor_range and cur_combo[2] in alto_range and cur_combo[3] in soprano_range:
+        if cur_combo[2] - cur_combo[1] <= 12 and cur_combo[3] - cur_combo[2] <= 12:
+            return True
     return False
-
 
 def gen_seventh_options(chord_num, inc=False):
     chord_options = []
@@ -154,32 +153,10 @@ def gen_triad_options(chord_num, double_note=1):
 if __name__ == "__main__":
     for c in notesets[0]: # cs 
         print(pretty_midi.note_number_to_name(c))
+    for cs in notesets[1]: # cs 
+        print(pretty_midi.note_number_to_name(cs))
 
     input("Continue...")
-    '''
-    print("Bs:")
-    for b in Bs: 
-        print(pretty_midi.note_number_to_name(b))
-
-    print("Cs:")
-    for c in Cs: 
-        print(pretty_midi.note_number_to_name(c))
-
-    print("Ds:")
-    for d in Ds: 
-        print(pretty_midi.note_number_to_name(d))
-
-    print("Es:")
-    for e in Es: 
-        print(pretty_midi.note_number_to_name(e))
-
-    print("Fs:")
-    for f in Fs: 
-        print(pretty_midi.note_number_to_name(f))
-
-    print("Gs:")
-    for g in Gs: 
-        print(pretty_midi.note_number_to_name(g))'''
 
     triad_1_options = gen_triad_options(1) + gen_triad_options(1, double_note=5)
     triad_1_options.sort()

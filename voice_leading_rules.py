@@ -91,6 +91,7 @@ def direct_fifths_octaves(state, next_state):
     return num_d58
 
 if __name__ == "__main__":
+    ### UNIT TESTS ###
     state = [47,54,62,71]
     next_state = [54,61,61,70]
     parallel_fifths_and_octaves(state, next_state)

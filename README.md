@@ -1,11 +1,20 @@
 # Project Description
 This project is focused on voice leading (also called part writing) in tonal harmony. Tonal harmony has a vocabulary consisting of triads and 7th chords and a grammar consisting of the ways in which the chords are selected (harmonic progression) and connected (voice leading). The basic task in this project is to do voice leading given a harmonic progression, following the conventions and norms of tonal composers. This will require formulating the voice leading problem (rewards, state space/features) so that reinforcement strategies like value iteration can be applied. Once the problem has been properly translated, several reinforcement learning schemes can be applied and evaluated.
 
-## Problem simplifications
+We implement three models each designed to accomplish a slightly different task: a voicing model, a free model, and a melody harmonization model. 
+
+## Voicing Model: 
 1. Harmonic progression is provided, algorithm need only provide the voicings
-2. We consider only harmonic progressions in the key of C major of length 4
+2. We consider only harmonic progressions in the key of C major
 3. We restruct the range of each part
-4. We only consider triad chords without inversions
+
+## Free Model 
+1. Algorithm provides the voicings as well as a chord progression
+2. We consider only harmonic progressions in the key of C major
+3. We restruct the range of each part
+
+## Melody Harmonizaton Model 
+1. Algorithm is provided a melody. It picks chords (with proper voice leading) that fits the given input. 
 
 ## To Do: 
 1. Rule-breaking functions
@@ -44,6 +53,5 @@ We can reformulate the problem as follows:
 * We consider our "actions" to be the next state that agent transitions to. Thus, if there are `n` states, there are also `n` actions.
 * Our Q-value table is `nxn`
 * 
-
 
 ### Listening 

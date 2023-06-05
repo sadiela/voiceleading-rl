@@ -11,7 +11,7 @@ def flipCoin(p):
   r = random.random()
   return r < p 
 
-class QLearningAgent():
+class VoicingModel():
     """
       Q-Learning Agent
       Functions you should fill in:
@@ -21,12 +21,12 @@ class QLearningAgent():
         - getAction
         - update
     """
-    def __init__(self):
-        self.alpha = 0.1
-        self.gamma = 0.6
-        self.epsilon = 0.1
+    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.1, numStates = 148):
+        self.alpha = alpha
+        self.gamma = gamma
+        self.epsilon = epsilon
         self.Qvalues = 0 # some matrix
-        self.numStates = 148
+        self.numStates = numStates
 
         with open('chord_dict.yaml', 'r') as file:
             self.chord_dict = yaml.safe_load(file)
@@ -37,6 +37,7 @@ class QLearningAgent():
         self.Qvalues = np.zeros((self.numStates,self.numStates))
         
     def calculateRewards(self, state, next_state):
+        # for this model, don't care about harmonic progression rewards
         reward = 0
         # i is starting state, j is next state
         cur_start = self.state_indices[state]
@@ -61,7 +62,6 @@ class QLearningAgent():
         "*** YOUR CODE HERE ***"
         return self.Qvalues[(state,next_state)] # do I have to do something to handle when we've never sean a state? 
         #util.raiseNotDefined()
-
 
     def computeValueFromQValues(self, state, next_chord):
         """
@@ -236,7 +236,7 @@ class QLearningAgent():
 
 ###  TRAINING LOOP ###
 falling_thirds = [1,6,4,2,7,5,1,-1]
-agent = QLearningAgent()
+agent = VoicingModel()
 all_epochs = []
 all_penalties = []
 chord_progressions = [
