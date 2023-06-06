@@ -23,10 +23,8 @@ We implement three models each designed to accomplish a slightly different task:
 
     b. Leaps --> augmented intervals, 7ths, leaps larger than an octave
 
-    c. Parallel motion (parallel 5ths and octaves)
+    c. Parallel motion (parallel 5ths and octaves); have to check all 6 pairs!
 
-        * Have to check all 6 pairs!
-        
     d. Direct 5ths: outer parts move in the same direction into a P5 or P8 with a leap in the soprano part
 
 2. Create "training set" of chord progressions

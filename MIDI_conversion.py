@@ -61,7 +61,7 @@ def midis_to_wavs(midi_dir, wav_dir=None):
     midi_list = [f for f in midi_dir_list if f[-3:] == 'mid']
     for midi in midi_list: 
         print("MIDI", midi)
-        midi_to_wav(str(midi_dir) + '/' + midi, str(wav_dir) +'/' + midi[:-3]+'wav')
+        midi_to_wav(str(midi_dir) +'/'+ midi, str(wav_dir) +'/'+ midi[:-3]+'wav')
 
 
 if __name__ == "__main__":

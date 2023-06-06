@@ -203,63 +203,52 @@ def gen_all_chords():
 
 
 if __name__ == "__main__":
+    '''
+    Verify noteset indices are what we expect
     for c in notesets[0]: # cs 
         print(pretty_midi.note_number_to_name(c))
     for cs in notesets[1]: # cs 
-        print(pretty_midi.note_number_to_name(cs))
-
-    input("Continue...")
-
-    chord_dict = {}
-    state_dict = {}
+        print(pretty_midi.note_number_to_name(cs))'''
 
     all_chord_options = gen_all_chords()
 
-
-    # make sure the chords are...right
+    '''
+    # make sure the chords are what we expect
     total_states = 0 
-    index = 0
     for i, voicing_options in enumerate(all_chord_options):
         print("Chord number:", i+1)
         total_states += len(voicing_options)
         print("Cur total states:", total_states)
         for c_opt in voicing_options:
-            print("Notes:", pretty_midi.note_number_to_name(c_opt[0]),pretty_midi.note_number_to_name(c_opt[1]),pretty_midi.note_number_to_name(c_opt[2]),pretty_midi.note_number_to_name(c_opt[3]))
             chord = determine_chord_from_voicing(c_opt)
-            print("Chord:", chord)
             assert chord == i+1
-            #print("Inversion:", determine_inversion(c_opt, chord))
-            #state_dict[index] = c_opt
-            #index+=1
-    print(total_states)    
-    sys.exit(0)
+    print(total_states)''' 
 
-    for i, chord_options in enumerate(all_chord_options):
-        chord_dict[i+1] = []
-        for j, c_opt in enumerate(chord_options):
-            key = next(key for key, value in state_dict.items() if value == c_opt)
-            #print(i, j, c_opt)
-            name = "chord_" + str(i+1) + '_' + str(j)
-            chord_dict[i+1].append(key)
-
-    with open("voicing_state_dict.yaml", 'w') as outfile:
-        yaml.dump(chord_dict, outfile, default_flow_style=False)
-    with open("chord_dict.yaml", 'w') as outfile:
-        yaml.dump(chord_dict, outfile, default_flow_style=False)
-
-    with open("voicing_state_indices.yaml", 'w') as outfile:
-        yaml.dump(state_dict, outfile, default_flow_style=False)
-    with open("state_dict.yaml", 'w') as outfile:
-        yaml.dump(state_dict, outfile, default_flow_style=False)
-
+    chord_dict = {}
     inverse_chord_dict = {}
+    state_dict = {}   
+
+    # create state dictionary, chord dictionary (indices mapped to )
+    index = 0 
+    for i, voicing_options in enumerate(all_chord_options):
+        chord_dict[i+1] = []
+        for c_opt in voicing_options:
+            state_dict[index] = c_opt
+            chord_dict[i+1].append(index)
+            index += 1
+
+    with open("./dictionaries/chord_dict_2.yaml", 'w') as outfile:
+        yaml.dump(chord_dict, outfile, default_flow_style=False)
+
+    with open("./dictionaries/state_dict_2.yaml", 'w') as outfile:
+        yaml.dump(state_dict, outfile, default_flow_style=False)
+
     for key in chord_dict:
         print("KEY")
         for idx in chord_dict[key]:
-            print("IDX:", idx)
             inverse_chord_dict[idx] = key
 
-    with open("inverse_chord_dict.yaml", 'w') as outfile:
+    with open("./dictionaries/inverse_chord_dict_2.yaml", 'w') as outfile:
         yaml.dump(inverse_chord_dict, outfile, default_flow_style=False)
 
     
