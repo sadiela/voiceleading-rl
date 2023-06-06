@@ -18,12 +18,19 @@ We implement three models each designed to accomplish a slightly different task:
 
 ## To Do: 
 1. Rule-breaking functions
+    
     a. Voice crossing
+
     b. Leaps --> augmented intervals, 7ths, leaps larger than an octave
+
     c. Parallel motion (parallel 5ths and octaves)
+
         * Have to check all 6 pairs!
+        
     d. Direct 5ths: outer parts move in the same direction into a P5 or P8 with a leap in the soprano part
+
 2. Create "training set" of chord progressions
+
 3. Function to convert algorithm output to MIDI
 
 All other rules (spacing, ranges) are taken care of by the state space definition
