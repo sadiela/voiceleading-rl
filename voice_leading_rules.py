@@ -103,15 +103,15 @@ def illegal_common_tones(state, next_state):
             num_common_tones += 1
     if num_common_tones == 3: 
         if state[0] == next_state[0]:
-            return True
+            return 1
         else:
-            return False # bass arpeggiation!
+            return 0 # bass arpeggiation!
     elif num_common_tones == 4:
-        return True
-    return False
-
+        return 1
+    return 0
 
 def leading_tone_resolution(state, next_state): 
+    # IMPORTANT IN THE OUTER VOICE!
     # find leading tone:
     for i, note in enumerate(state): 
         if note%12 == 11: # LEADING TONE! Should resolve up by step
@@ -120,7 +120,7 @@ def leading_tone_resolution(state, next_state):
             if not (res_step == 1 or res_step == 2): 
                 if i == 0 or i == 3:
                     return 2
-                return 1
+                return 0
     return 0
 
 def seventh_approach(state, next_state):
@@ -132,7 +132,7 @@ def seventh_approach(state, next_state):
     if chord_2 > 7: # second chord is a 7th
         # find the 7th
         for i, note in enumerate(next_state): 
-            if note%12 == notes_in_chords[-1]: # find the 7th 
+            if note%12 == notes_in_chords[chord_2][-1]: # find the 7th 
                 approach_note = state[i]
                 seventh_note = next_state[i]
                 if approach_note - seventh_note > 2:
@@ -143,11 +143,10 @@ def seventh_approach(state, next_state):
 def seventh_resolve(state,next_state): 
     # A seventh MUST resolve DOWN by step!
     chord_1 = determine_chord_from_voicing(state)
-    chord_2 = determine_chord_from_voicing(next_state)
 
     if chord_1 > 7: # first chord is a 7th
         for i, note in enumerate(next_state): 
-            if note%12 == notes_in_chords[-1]:
+            if note%12 == notes_in_chords[chord_1][-1]:
                 seventh_note = state[i]
                 resolution_note = next_state[i]
                 if seventh_note-resolution_note > 2 or seventh_note-resolution_note < 1: 
@@ -161,16 +160,16 @@ def doubled_leading_tone(next_state):
         if note%12 == 11:
             leading_tone_count += 1
     if leading_tone_count > 1:
-        return True
-    return False
+        return 1
+    return 0
 
 def dim_triad_first_inversion(next_state):  # WILL ONLY WORK FOR MAJOR
     chord = determine_chord_from_voicing(next_state)
     inversion = determine_inversion(next_state, chord)
     if chord == 7: # diminished 7th 
         if inversion != 1:
-            return True
-    return False
+            return 1
+    return 0
 
 def check_inv_triad_complete(next_state): 
     # INVERTED TRIADS SHOULD BE COMPLETE!
@@ -179,8 +178,8 @@ def check_inv_triad_complete(next_state):
     inversion = determine_inversion(next_state, chord)
     if inversion == 1: 
         if not is_complete(next_state, chord):
-            return True
-    return False
+            return 1
+    return 0
 
 def second_inversion_triad_doubling(next_state): 
     # return true if INCORRECT doubling
@@ -194,14 +193,14 @@ def second_inversion_triad_doubling(next_state):
             if pitch%12 == fifth:
                 num_fifths += 1
         if num_fifths >=2:
-            return False
+            return 0
         else:
-            return True
-    return False
+            return 1
+    return 0
 
 ### FULL REWARD FUNCTION ###
 def voice_leading_reward_function(state, next_state): 
-    voice_cross = voice_crossing(state, next_state)
+    vc = voice_crossing(state, next_state)
         # negative reward for parallel 5ths/octaves
     p58 = parallel_fifths_octaves(state, next_state)
 
@@ -209,9 +208,30 @@ def voice_leading_reward_function(state, next_state):
 
     d58 = direct_fifths_octaves(state, next_state)
 
+    lt_rew = leading_tone_resolution(state, next_state)
+
+    doubled_lt = doubled_leading_tone(next_state)
+
+    sev_app = seventh_approach(state, next_state)
+    sev_res = seventh_resolve(state,next_state)
+
+    # get info about next_state
+    next_state_chord = determine_chord_from_voicing(next_state)
+    next_state_inv = determine_inversion(next_state, next_state_chord)
+
     # FOR THESE, TRUE == ILLEGAL! BAD! DOES BREAK A RULE!
 
-    return -.2*voice_cross + -.1*p58 + -.2*ill + -.1*d58, voice_cross, p58, ill, d58
+    inv_triad_complete = check_inv_triad_complete(next_state)
+
+    bad_ct = illegal_common_tones(state, next_state)
+
+    triad_first_inv = dim_triad_first_inversion(next_state)
+
+    ts_inv_doubling = second_inversion_triad_doubling(next_state)
+
+    dim_t_inv = dim_triad_first_inversion(next_state)
+
+    return -.2*vc + -.1*p58 + -.2*ill + -.1*d58 + -.05*lt_rew+ -.1*doubled_lt + -.05*bad_ct + -.05*triad_first_inv + -.05*ts_inv_doubling + -.05*dim_t_inv + -.2*inv_triad_complete + -.1*sev_res+ -.1*sev_app, vc, p58, ill, d58
 
 def note_names_to_numbers(namelist):
     numbers = []
@@ -262,7 +282,6 @@ if __name__ == "__main__":
     
     ### PARALLEL 5ths AND OCTAVES ###
     print("\n### PARALLEL MOTION UNIT TESTS ###")
-    # single crossing 
     pfifths_1 = note_names_to_numbers(["C3","G3","E4","C5"]) 
     pfifths_2 = note_names_to_numbers(["G3","D4","D4","B4"])
     num_pfifths = parallel_fifths_octaves(pfifths_1,pfifths_2)
@@ -275,7 +294,6 @@ if __name__ == "__main__":
 
     ### DIRECT 5ths AND OCTAVES ###
     print("\n### DIRECT MOTION UNIT TESTS ###")
-    # single crossing 
     dfifths_1 = note_names_to_numbers(["E3","G3","E4","C5"]) 
     dfifths_2 = note_names_to_numbers(["D3","D4","F4","A4"])
     num_dfifths = direct_fifths_octaves(dfifths_1,dfifths_2)
@@ -324,47 +342,55 @@ if __name__ == "__main__":
     has_doubled_leading_tone = note_names_to_numbers(["B3","D4","F4","B4"]) 
     check_dl = doubled_leading_tone(has_doubled_leading_tone)
     print("Doubled leading tone unit test:", check_dl)
-    assert check_dl == True
+    assert check_dl == 1
 
     no_doubled_leading_tone = note_names_to_numbers(["B3","D4","F4","D5"]) 
     check_ndl = doubled_leading_tone(no_doubled_leading_tone)
     print("No doubled leading tone unit test:", check_ndl)
-    assert check_ndl == False
+    assert check_ndl == 0
 
     ### DIMINISHED TRIAD SHOULD BE IN FIRST INVERSION ###
     dim_first_inversion = note_names_to_numbers(["D3","B3","F4","B4"]) 
     check_dim_first = dim_triad_first_inversion(dim_first_inversion)
     print("Diminished triad first inversion unit test:", check_dim_first)
-    assert check_dim_first == False
+    assert check_dim_first == 0
 
     dim_root_position = note_names_to_numbers(["B3","D4","F4","D5"]) 
     check_dim_root = dim_triad_first_inversion(dim_root_position)
     print("Diminished triad root position unit test:", check_dim_root)
-    assert check_dim_root == True
+    assert check_dim_root == 1
 
     ### LEADING TONE RESOLVES UP TO TONIC ###
     print("\n### LEADING TONE RESOLUTION UNIT TESTS ###")
-    # single crossing 
-    chord_with_leading_tone = note_names_to_numbers(["E3","G3","E4","C5"]) 
-    resolution = note_names_to_numbers(["D3","D4","F4","A4"])
+    chord_with_leading_tone = note_names_to_numbers(["G2","F3","D4","B4"]) 
+    resolution = note_names_to_numbers(["C3","E3","C4","C5"])
     resolved_incorrectly = leading_tone_resolution(chord_with_leading_tone, resolution)
     print("Correct leading tone resolution unit test:", resolved_incorrectly)
-    assert resolved_incorrectly == False # is resolved correctly!
+    assert resolved_incorrectly == 0 # is resolved correctly!
 
     ### SEVENTH APPROACH ###
     print("\n### APPROACHING THE 7th UNIT TESTS ###")
-
+    approach_chord = note_names_to_numbers(["D3","F3","A3","D4"]) # approach by common tone
+    seventh_chord = note_names_to_numbers(["G2","F3","D4","B4"])
+    approached_incorrectly = seventh_approach(approach_chord, seventh_chord)
+    print("Correct seventh approach unit test:", approached_incorrectly)
+    assert approached_incorrectly == 0 # is resolved correctly!
 
     ### SEVENTH RESOLUTION ###
     print("\n### RESOLVING THE 7th UNIT TESTS ###")
+    seventh_chord = note_names_to_numbers(["G2","F3","D4","B4"]) 
+    resolution_chord = note_names_to_numbers(["C3","E3","C4","C5"])
+    resolved_incorrectly = seventh_resolve(chord_with_leading_tone, resolution)
+    print("Correct seventh resolution unit test:", resolved_incorrectly)
+    assert resolved_incorrectly == 0 # is resolved correctly!
 
     ### COMPLETELY LEGAL VOICINGS ###
-    chord1 = note_names_to_numbers(["C3","C4","E4","G4"]) # tonic I
-    
-    chord2 = note_names_to_numbers(["D3","B3","F4","B4"]) # iii
-    chord3 = note_names_to_numbers(["D3","B3","F4","B4"]) # IV
-    chord4 = note_names_to_numbers(["D3","B3","F4","B4"]) # V
-    chord5 = note_names_to_numbers(["D3","B3","F4","B4"]) # I
+    # should have 0 reward
+    chord1 = note_names_to_numbers(["D3","B3","A4","F5"]) # iii6
+    chord2 = note_names_to_numbers(["E3","B3","G4","E5"]) # V6
+    chord3 = note_names_to_numbers(["G3","B3","G4","D5"]) # vi
+    chord4 = note_names_to_numbers(["E3","C4","G4","C5"]) # V7
+    chord5 = note_names_to_numbers(["A2","C4","E4","E5"]) # I
 
     print(voice_leading_reward_function(chord1, chord2))    
     print(voice_leading_reward_function(chord2, chord3))    
