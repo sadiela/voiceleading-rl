@@ -38,20 +38,11 @@ class VoicingModel():
         
     def calculateRewards(self, state, next_state):
         # for this model, don't care about harmonic progression rewards
-        reward = 0
         # i is starting state, j is next state
         cur_start = self.state_indices[state]
         cur_end = self.state_indices[next_state]
         # negative reward for voice crossing
-        voice_cross = voice_crossing(cur_start, cur_end)
-        # negative reward for parallel 5ths/octaves
-        p58 = parallel_fifths_and_octaves(cur_start, cur_end)
-
-        ill = illegal_leaps(cur_start, cur_end)
-
-        d58 = direct_fifths_octaves(cur_start, cur_end)
-
-        return -.2*voice_cross + -.1*p58 + -.2*ill + -.1*d58, voice_cross, p58, ill, d58
+        return voice_leading_reward_function(cur_start, cur_end)
 
     def getQValue(self, state, next_state):
         """

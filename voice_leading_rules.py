@@ -191,6 +191,18 @@ def seventh_resolve(state,next_state):
                     return 1 # did not resolve down by step
     return 0
 
+def voice_leading_reward_function(state, next_state): 
+    voice_cross = voice_crossing(state, next_state)
+        # negative reward for parallel 5ths/octaves
+    p58 = parallel_fifths_and_octaves(state, next_state)
+
+    ill = illegal_leaps(state, next_state)
+
+    d58 = direct_fifths_octaves(state, next_state)
+
+    return -.2*voice_cross + -.1*p58 + -.2*ill + -.1*d58, voice_cross, p58, ill, d58
+
+
 if __name__ == "__main__":
     ### UNIT TESTS ###
     state = [47,54,62,71]
