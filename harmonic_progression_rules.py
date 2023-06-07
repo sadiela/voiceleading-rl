@@ -29,3 +29,6 @@ def harmonic_prog_reward_minor(state, next_state):
     chord_2 = determine_chord_from_voicing(next_state)
 
     return 0 
+
+if __name__ == "__main__":
+    print("Testing harmonic progression rules (major)")

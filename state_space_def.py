@@ -85,9 +85,12 @@ def is_complete(voicing, chord):
         if cur_note not in unique_notes:
             unique_notes.append(cur_note)
     if chord < 8:
-        return False if len(unique_notes) < 3 else True
+        if len(unique_notes) < 3:
+            return False
     else: 
-        return False if len(unique_notes) < 4 else True
+        if len(unique_notes) < 4:
+            return False 
+    return True
 
 def determine_inversion(voicing, chord): 
     bottom_note = voicing[0]%12
