@@ -1,4 +1,6 @@
 
+from state_space_def import * 
+
 def illegal_leaps(state, next_state): 
     bass_interval = abs(next_state[0] - state[0])
     tenor_interval = abs(next_state[1] - state[1])
@@ -89,6 +91,105 @@ def direct_fifths_octaves(state, next_state):
         elif alto_soprano_interval_2%12 == 7: # move into a fifth
             num_d58 += 1    
     return num_d58
+
+def inverted_triad_complete(state, next_state): 
+    # INVERTED TRIADS SHOULD BE COMPLETE!
+    chord = determine_chord_from_voicing(next_state)
+    inversion = determine_inversion(next_state)
+    if inversion == 1: 
+        if not is_complete(next_state, chord):
+            return 1
+    return 0
+
+def second_inversion_triad_doubling(state, next_state): 
+    chord = determine_chord_from_voicing(next_state)
+    inversion = determine_inversion(next_state)
+    if inversion == 2 and chord < 8:
+        # 5th should be doubled
+        fifth = notes_in_chords[chord][2]
+        num_fifths = 0
+        for pitch in next_state:
+            if pitch%12 == fifth:
+                num_fifths += 1
+        if num_fifths >=2:
+            return 0
+        else:
+            return 1
+    return 0
+
+def three_common_tones(state, next_state):
+    num_common_tones = 0
+    for i in range(4):
+        if state[i] == next_state[i]:
+            num_common_tones += 1
+    if num_common_tones == 3: 
+        if state[-1] == next_state[-1]:
+            return 1
+        else:
+            return 0 # bass arpeggiation!
+    elif num_common_tones == 4:
+        return 1
+    return 0
+
+def doubled_leading_tone(state, next_state):
+    leading_tone_count = 0 
+    for note in next_state:
+        if note%12 == 11:
+            leading_tone_count += 1
+    if leading_tone_count > 1:
+        return 1
+    return 0
+
+def dim_triad_first_inversion(state, next_state):  # WILL ONLY WORK FOR MAJOR
+    chord = determine_chord_from_voicing(next_state)
+    inversion = determine_inversion(next_state, chord)
+    if chord == 7: # diminished 7th 
+        if inversion != 1:
+            return 1
+    return 0
+
+def leading_tone_resolution(state, next_state): 
+    # find leading tone:
+    for i, note in enumerate(state): 
+        if note%12 == 11: # LEADING TONE! Should resolve up by step
+            resolution_note = next_state[i]
+            res_step = resolution_note - note 
+            if not (res_step == 1 or res_step == 2): 
+                if i == 0 or i == 3:
+                    return 2
+                return 1
+    return 0
+
+def seventh_approach(state, next_state):
+    # a 7th must not be approached by descending leap
+    # Figure out if the chord is a 7th:
+    # chord_1 = determine_chord_from_voicing(state)
+    chord_2 = determine_chord_from_voicing(next_state)
+
+    if chord_2 > 7: # second chord is a 7th
+        # find the 7th
+        for i, note in enumerate(next_state): 
+            if note%12 == notes_in_chords[-1]: # find the 7th 
+                approach_note = state[i]
+                seventh_note = next_state[i]
+                if approach_note - seventh_note > 2:
+                    # approached by descending leap
+                    return 1 
+    return 0
+
+def seventh_resolve(state,next_state): 
+    # A seventh MUST resolve DOWN by step!
+    chord_1 = determine_chord_from_voicing(state)
+    chord_2 = determine_chord_from_voicing(next_state)
+
+    if chord_1 > 7: # first chord is a 7th
+        for i, note in enumerate(next_state): 
+            if note%12 == notes_in_chords[-1]:
+                seventh_note = state[i]
+                resolution_note = next_state[i]
+                if seventh_note-resolution_note > 2 or seventh_note-resolution_note < 1: 
+                    return 1 # did not resolve down by step
+    return 0
 
 if __name__ == "__main__":
     ### UNIT TESTS ###

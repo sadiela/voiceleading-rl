@@ -78,6 +78,17 @@ pitches_in_sevenths_major = {
     7: [notesets[11], notesets[2], notesets[5], notesets[9]], # BDFA
 }
 
+def is_complete(voicing, chord): 
+    unique_notes = [] 
+    for pitch in voicing: 
+        cur_note = pitch%12
+        if cur_note not in unique_notes:
+            unique_notes.append(cur_note)
+    if chord < 8:
+        return False if len(unique_notes) < 3 else True
+    else: 
+        return False if len(unique_notes) < 4 else True
+
 def determine_inversion(voicing, chord): 
     bottom_note = voicing[0]%12
     for i,n in enumerate(notes_in_chords[chord]):
