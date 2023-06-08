@@ -21,17 +21,17 @@ class VoicingModel():
         - getAction
         - update
     """
-    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.1, numStates = 148):
+    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.1, numStates = 1093):
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
         self.Qvalues = 0 # some matrix
         self.numStates = numStates
 
-        with open('chord_dict.yaml', 'r') as file:
+        with open('./dictionaries/chord_dict_2.yaml', 'r') as file:
             self.chord_dict = yaml.safe_load(file)
 
-        with open('state_dict.yaml', 'r') as file:
+        with open('./dictionaries/state_dict_2.yaml', 'r') as file:
             self.state_indices = yaml.safe_load(file)
 
         self.Qvalues = np.zeros((self.numStates,self.numStates))
@@ -108,7 +108,6 @@ class VoicingModel():
           should choose None as the action.
           Legal actions are determined by next_chord
         """
-        #print(next_chord)
         if next_chord == -1:
             print("NO LEGAL MOVE!")
             return None
@@ -142,6 +141,33 @@ class VoicingModel():
 
     def getValue(self, state):
         return self.computeValueFromQValues(state)
+    
+    def trainModel(self, chord_progressions, num_epochs=1000):
+        epoch_rewards = []
+        for i in range(1,num_epochs):
+            if i%500 == 0:
+                print("epoch:", i)
+            epoch_reward = 0
+            for chord_prog in chord_progressions:
+                for j, c in enumerate(chord_prog):
+                    if chord_prog[j+1] == -1: # DONE WITH LOOP!
+                        break
+                    if j == 0:
+                        # choose starting state
+                        cur_state = self.getAction(chord_prog[j])
+                    # choose an action
+                    chosen_action = self.getAction(chord_prog[j+1], cur_state)
+                    next_state = chosen_action # peform the chosen action and transition to the next state
+
+                    # receive reward
+                    reward, _,_,_,_ = self.calculateRewards(cur_state, next_state)
+                    epoch_reward += reward
+                    # update q_val
+                    self.update(cur_state, next_state, reward, chord_prog[j+2])
+            
+            epoch_rewards.append(epoch_reward)
+        return epoch_rewards
+
     
     def evalAgent(self, chord_progression, num_voicings, fname=None, synth=False):
         all_voicings = []
@@ -186,6 +212,7 @@ class VoicingModel():
         if synth:
             midis_to_wavs(results_dir)
 
+
     def trainingEval(self, chord_progression, num_voicings):
         all_voicings = []
         all_rewards = 0
@@ -226,68 +253,3 @@ class VoicingModel():
 
 
 ###  TRAINING LOOP ###
-falling_thirds = [1,6,4,2,7,5,1,-1]
-agent = VoicingModel()
-all_epochs = []
-all_penalties = []
-chord_progressions = [
-    [1, 4, 5, 1, -1],
-    [1, 6, 2, 5, 1, -1],
-    [1, 4, 7, 3, 6, 2, 5, 1, -1],
-    [1, 6, 4, 2, 7, 5, 1,-1],
-    [1,2,-1],
-    [1,3,-1],
-    [1,4,-1],
-    [1,5,-1],
-    [1,7,-1],
-    [2,5,-1],
-    [3,5,-1],
-    [4,5,-1],
-    [6,5,-1],
-    [7,5,-1],
-                    ]
-eval_rewards = []
-epoch_rewards = []
-for i in range(1,1000):
-    epoch_reward = 0
-    for chord_prog in chord_progressions:
-        for j, c in enumerate(chord_prog):
-            if chord_prog[j+1] == -1: # DONE WITH LOOP!
-                break
-            if j == 0:
-                # choose starting state
-                cur_state = agent.getAction(chord_prog[j])
-
-            # choose an action
-            chosen_action = agent.getAction(chord_prog[j+1], cur_state)
-            # peform the chosen action and transition to the next state
-            next_state = chosen_action
-
-            # receive reward
-            reward, _,_,_,_ = agent.calculateRewards(cur_state, next_state)
-            epoch_reward += reward
-            
-            # update q_val
-            agent.update(cur_state, next_state, reward, chord_prog[j+2])
-    
-    epoch_rewards.append(epoch_reward)
-
-
-'''plt.plot(eval_rewards)
-plt.title("Total Reward over Epoch")
-plt.show()
-
-plt.plot(epoch_rewards)
-plt.xlabel("Training Epoch")
-plt.ylabel("Reward")
-plt.title("Total Reward over Epoch")
-plt.show()'''
-
-print("EVALUATING")
-# EVALUATE
-chord_progression = [1, 4, 5, 1, -1] 
-
-
-falling_fifths = [1, 4, 7, 3,-1] #, 6, 2, 5, 1, -1]
-ex_prog = [1,2,5,1,-1]
-agent.evalAgent(ex_prog, 5, synth=True, fname='presentation_example')

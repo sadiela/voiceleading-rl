@@ -240,3 +240,35 @@ class MelodyHarmonization():
 
         return all_rewards
     
+    def train_melody_harm(self, melodies, num_epochs=1000): 
+        ###  TRAINING LOOP ###
+        #melody_progression = [72,74,72,76,79,-1]
+        #melodies = [melody_progression]
+
+        epoch_rewards = []
+        for i in range(1,num_epochs):
+            epoch_reward = 0
+            for melody in melodies:
+                for j, c in enumerate(melody):
+                    if melody[j+1] == -1: # DONE WITH LOOP!
+                        break
+                    if j == 0:
+                        # choose starting state
+                        cur_state = self.getAction(melody[j])
+
+                    # choose an action
+                    chosen_action = self.getAction(melody[j+1], cur_state)
+                    # peform the chosen action and transition to the next state
+                    next_state = chosen_action
+
+                    # receive reward
+                    reward, _,_,_,_ = self.calculateRewards(cur_state, next_state)
+                    epoch_reward += reward
+                    
+                    # update q_val
+                    self.update(cur_state, next_state, reward, melody[j+2])
+            
+            print(epoch_reward)
+            epoch_rewards.append(epoch_reward)
+        return epoch_rewards
+        
