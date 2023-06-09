@@ -6,6 +6,7 @@ the RL tonal music models.
 import yaml
 import pretty_midi
 import sys
+from chord_constants import *
 
 '''
 Vocabulary:
@@ -15,68 +16,6 @@ Vocabulary:
 - 7th chord: A chord consisting of 7 distinct pitches
 - Incomplete chord: 
 '''
-
-
-# Ranges typical of 4-part choral music. These can be changed 
-# at the user's discretion
-bass_range = list(range(40,61))
-tenor_range = list(range(48,68)) 
-alto_range = list(range(55,75)) 
-soprano_range = list(range(60,80)) # FINAL INDEX NOT INCLUDED!
-
-# These are lists of all pitches of a certain note within
-# the specified range (40-80 for us)
-# VERIFIED!
-notesets = [[], # Cs     0 (0,2,4,5,7,9,11)
-            [], # C#Df   1
-            [], # D      2
-            [], # D#Ef   3
-            [], # E      4
-            [], # F      5
-            [], # F#Gf   6
-            [], # G      7
-            [], # G#Af   8
-            [], # A      9
-            [], # A# Bf  10
-            []] # B      11
-
-for note in range(bass_range[0], soprano_range[-1]+1):
-    notesets[note%12].append(note)
-
-# list of notes that occur in each chord in C major
-# 0 = C, 2 = D, etc. 
-notes_in_chords = {
-    1: [0,4,7],
-    2: [2,5,9],
-    3: [4,7,11],
-    4: [5,9,0],
-    5: [7,11,2],
-    6: [9,0,4],
-    7: [11,2,5],
-    8: [2,5,9,0], # 2 7th
-    9: [5,9,0,4], # 4 7th 
-    10: [7,11,2,5], # 5 7th 
-    11: [11,2,5,9] # 7 7th
-}
-
-# lists of possible roots, thirds, and fifths for each 
-# triad in C major
-pitches_in_triads_major = {
-    1: [notesets[0], notesets[4], notesets[7]], # CEG
-    2: [notesets[2], notesets[5], notesets[9]], # DFA
-    3: [notesets[4], notesets[7], notesets[11]], # EGB
-    4: [notesets[5], notesets[9], notesets[0]], # FAC
-    5: [notesets[7], notesets[11], notesets[2]], # GBD
-    6: [notesets[9], notesets[0], notesets[4]], # ACE
-    7: [notesets[11], notesets[2], notesets[5]], # BDF
-}
-
-pitches_in_sevenths_major = {
-    2: [notesets[2], notesets[5], notesets[9], notesets[0]], # DFAC
-    4: [notesets[5], notesets[9], notesets[0], notesets[4]], # FACE
-    5: [notesets[7], notesets[11], notesets[2], notesets[5]], # GBDF
-    7: [notesets[11], notesets[2], notesets[5], notesets[9]], # BDFA
-}
 
 def is_complete(voicing, chord): 
     unique_notes = [] 
@@ -111,6 +50,20 @@ def determine_chord_from_voicing(voicing):
             return i
 
     # now i have list of pitches (unique)... determine the chord!
+
+def chord_strings(idx_list, state_dict):
+    voicing_list = [state_dict[i] for i in idx_list]
+    chord_strings = [chord_and_inversion_string(i) for i in  voicing_list]
+    return chord_strings
+
+def chord_and_inversion_string(voicing):
+    chord = determine_chord_from_voicing(voicing)
+    inv = determine_inversion(voicing, chord)
+    chord_str = chord_number_to_string_major[chord]
+    if chord < 8:
+        return chord_str + inversion_numbers_triad[inv]
+    else: 
+        return chord_str+inversion_numbers_seventh[inv]
 
 def determine_chord_validity(cur_combo): #, root):
     # takes SORTED note list
@@ -215,15 +168,7 @@ def gen_all_chords():
 
     return all_chord_options
 
-
-if __name__ == "__main__":
-    '''
-    Verify noteset indices are what we expect
-    for c in notesets[0]: # cs 
-        print(pretty_midi.note_number_to_name(c))
-    for cs in notesets[1]: # cs 
-        print(pretty_midi.note_number_to_name(cs))'''
-
+def generate_chord_dictionaries():
     all_chord_options = gen_all_chords()
 
     '''
@@ -251,6 +196,7 @@ if __name__ == "__main__":
             chord_dict[i+1].append(index)
             index += 1
 
+    # save dictionaries to yaml files # 
     with open("./dictionaries/chord_dict_2.yaml", 'w') as outfile:
         yaml.dump(chord_dict, outfile, default_flow_style=False)
 
@@ -265,4 +211,21 @@ if __name__ == "__main__":
     with open("./dictionaries/inverse_chord_dict_2.yaml", 'w') as outfile:
         yaml.dump(inverse_chord_dict, outfile, default_flow_style=False)
 
+
+
+if __name__ == "__main__":
+    # load state dict
+    with open('./dictionaries/state_dict_2.yaml', 'r') as file:
+        state_dict = yaml.safe_load(file)
+    idx_list = [19, 240, 592, 943, 2]
+    voicing_list = [state_dict[i] for i in idx_list]
+    print("VOICINGS", voicing_list)
+    chord_strings = [chord_and_inversion_string(i) for i in  voicing_list]
+    print("CHORD STRINGS:", chord_strings)
+    '''
+    Verify noteset indices are what we expect
+    for c in notesets[0]: # cs 
+        print(pretty_midi.note_number_to_name(c))
+    for cs in notesets[1]: # cs 
+        print(pretty_midi.note_number_to_name(cs))'''
     

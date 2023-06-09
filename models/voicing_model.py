@@ -142,7 +142,7 @@ class VoicingModel():
     def getValue(self, state):
         return self.computeValueFromQValues(state)
     
-    def trainModel(self, chord_progressions, num_epochs=1000):
+    def trainAgent(self, chord_progressions, num_epochs=1000):
         epoch_rewards = []
         for i in range(1,num_epochs):
             if i%500 == 0:
@@ -171,7 +171,8 @@ class VoicingModel():
     
     def evalAgent(self, chord_progression, num_voicings, fname=None, synth=False):
         all_voicings = []
-        for i in range(num_voicings):
+        all_rewards = [] 
+        for i in range(num_voicings): # create num_voicings voicings for the given chord progression!
             print("VOICING:", i)
             state_list = []
             total_reward = 0
@@ -200,7 +201,9 @@ class VoicingModel():
                 
                 total_reward += reward
 
-            print("Total reward and sequence:", total_reward, state_list)
+            all_rewards.append(total_reward)
+
+            print("Total reward and sequence:", total_reward, state_list, chord_strings(state_list, self.state_indices))
             if state_list not in all_voicings:
                 state_seq_to_MIDI(state_list, self.state_indices, desired_fstub=fname)
                 all_voicings.append(state_list)
@@ -212,44 +215,5 @@ class VoicingModel():
         if synth:
             midis_to_wavs(results_dir)
 
-
-    def trainingEval(self, chord_progression, num_voicings):
-        all_voicings = []
-        all_rewards = 0
-        for i in range(num_voicings):
-            state_list = []
-            total_reward = 0
-            num_voice_crossings = 0
-            num_parallels = 0
-            num_illegal_leaps = 0
-            num_direct = 0
-            for j, c in enumerate(chord_progression):
-                if chord_progression[j+1] == -1: # DONE WITH LOOP!
-                    break
-                if j == 0: # choose starting state
-                    cur_state = self.getAction(chord_progression[j], best=True)
-                    state_list.append(cur_state)
-
-                # choose an action (i.e., the next state)
-                chosen_action = self.getAction(chord_progression[j+1], cur_state, best=True)
-                
-                next_state = chosen_action
-                state_list.append(next_state)
-
-                reward, vc,p58,il,d58 = self.calculateRewards(cur_state, chosen_action)
-                num_voice_crossings += vc
-                num_parallels += p58
-                num_illegal_leaps += il  
-                num_direct += d58
-                
-                total_reward += reward
-
-            if state_list not in all_voicings:
-                all_voicings.append(state_list)
-            all_rewards += total_reward
-
-        return all_rewards
+        return all_voicings, all_rewards
         
-
-
-###  TRAINING LOOP ###

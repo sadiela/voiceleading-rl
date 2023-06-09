@@ -17,11 +17,11 @@ major_harmonic_adjacency_matrix = [
 def harmonic_prog_reward_major(state, next_state): 
     chord_1 = determine_chord_from_voicing(state)
     chord_2 = determine_chord_from_voicing(next_state)
-    if major_harmonic_adjacency_matrix[chord_1][chord_2] == 0:
-        return -0.5
-    elif major_harmonic_adjacency_matrix[chord_1][chord_2] == -1:
+    if major_harmonic_adjacency_matrix[chord_1-1][chord_2-1] == 0:
+        return 0
+    elif major_harmonic_adjacency_matrix[chord_1-1][chord_2-1] == -1:
         return -1
-    return 0 
+    return .1
 
 
 def harmonic_prog_reward_minor(state, next_state): 

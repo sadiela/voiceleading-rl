@@ -4,6 +4,7 @@ import numpy as np
 from MIDI_conversion import *
 from voice_leading_rules import *
 import matplotlib.pyplot as plt
+from harmonic_progression_rules import *
 
 results_dir = './results/'
 
@@ -21,37 +22,31 @@ class MelodyHarmonization():
         - getAction
         - update
     """
-    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.1, numStates = 148):
+    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.1, numStates = 1093):
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
         self.Qvalues = 0 # some matrix
         self.numStates = numStates
 
-        with open('chord_dict.yaml', 'r') as file:
+        with open('./dictionaries/chord_dict_2.yaml', 'r') as file:
             self.chord_dict = yaml.safe_load(file)
 
-        with open('state_dict.yaml', 'r') as file:
-            self.state_dict = yaml.safe_load(file)
+        with open('./dictionaries/state_dict_2.yaml', 'r') as file:
+            self.state_indices = yaml.safe_load(file)
 
         self.Qvalues = np.zeros((self.numStates,self.numStates))
         
     def calculateRewards(self, state, next_state):
         # for this model, don't care about harmonic progression rewards
-        reward = 0
         # i is starting state, j is next state
-        cur_start = self.state_dict[state]
-        cur_end = self.state_dict[next_state]
+        cur_start = self.state_indices[state]
+        cur_end = self.state_indices[next_state]
         # negative reward for voice crossing
-        voice_cross = voice_crossing(cur_start, cur_end)
-        # negative reward for parallel 5ths/octaves
-        p58 = parallel_fifths_and_octaves(cur_start, cur_end)
+        vl_reward, vc,p58,il,d58 =  voice_leading_reward_function(cur_start, cur_end)
+        harm_prog_reward = harmonic_prog_reward_major(cur_start, cur_end)
+        return vl_reward + harm_prog_reward, vc,p58,il,d58
 
-        ill = illegal_leaps(cur_start, cur_end)
-
-        d58 = direct_fifths_octaves(cur_start, cur_end)
-
-        return -.2*voice_cross + -.1*p58 + -.2*ill + -.1*d58, voice_cross, p58, ill, d58
 
     def getQValue(self, state, next_state):
         """
@@ -65,8 +60,8 @@ class MelodyHarmonization():
 
     def getLegalChords(self,pitch):
         legal_chords = []
-        for chord in self.state_dict.keys():
-            if self.state_dict[chord][-1] == pitch:
+        for chord in self.state_indices.keys():
+            if self.state_indices[chord][-1] == pitch:
                 legal_chords.append(chord)
         return legal_chords
 
@@ -160,10 +155,35 @@ class MelodyHarmonization():
     def getValue(self, state):
         return self.computeValueFromQValues(state)
     
+    def trainAgent(self, melodies, num_epochs=1000):
+        epoch_rewards = []
+        for i in range(1,num_epochs):
+            if i%500 == 0:
+                print("epoch:", i)
+            epoch_reward = 0
+            for melody in melodies:
+                for j, c in enumerate(melody):
+                    if melody[j+1] == -1: # DONE WITH LOOP!
+                        break
+                    if j == 0:
+                        # choose starting state
+                        cur_state = self.getAction(melody[j])
+                    # choose an action
+                    chosen_action = self.getAction(melody[j+1], cur_state)
+                    next_state = chosen_action # peform the chosen action and transition to the next state
+
+                    # receive reward
+                    reward, vc,p58,il,d58 = self.calculateRewards(cur_state, next_state)
+                    epoch_reward += reward
+                    # update q_val
+                    self.update(cur_state, next_state, reward, melody[j+2])
+            
+            epoch_rewards.append(epoch_reward)
+        return epoch_rewards
+    
     def evalAgent(self, melody, num_voicings, fname=None, synth=False):
         all_voicings = []
         for i in range(num_voicings):
-            print("VOICING:", i)
             state_list = []
             total_reward = 0
             num_voice_crossings = 0
@@ -191,9 +211,9 @@ class MelodyHarmonization():
                 
                 total_reward += reward
 
-            print("Total reward and sequence:", total_reward, state_list)
+            print("Total reward and sequence:", total_reward, state_list, chord_strings(state_list, self.state_indices))
             if state_list not in all_voicings:
-                state_seq_to_MIDI(state_list, self.state_dict, desired_fstub=fname)
+                state_seq_to_MIDI(state_list, self.state_indices, desired_fstub=fname)
                 all_voicings.append(state_list)
             else:
                 print("Already saved voicing")
@@ -202,43 +222,6 @@ class MelodyHarmonization():
 
         if synth:
             midis_to_wavs(results_dir)
-
-    def trainingEval(self, melody, num_voicings):
-        all_voicings = []
-        all_rewards = 0
-        for i in range(num_voicings):
-            state_list = []
-            total_reward = 0
-            num_voice_crossings = 0
-            num_parallels = 0
-            num_illegal_leaps = 0
-            num_direct = 0
-            for j, c in enumerate(melody):
-                if melody[j+1] == -1: # DONE WITH LOOP!
-                    break
-                if j == 0: # choose starting state
-                    cur_state = self.getAction(melody[j], best=True)
-                    state_list.append(cur_state)
-
-                # choose an action (i.e., the next state)
-                chosen_action = self.getAction(melody[j+1], cur_state, best=True)
-                
-                next_state = chosen_action
-                state_list.append(next_state)
-
-                reward, vc,p58,il,d58 = self.calculateRewards(cur_state, chosen_action)
-                num_voice_crossings += vc
-                num_parallels += p58
-                num_illegal_leaps += il  
-                num_direct += d58
-                
-                total_reward += reward
-
-            if state_list not in all_voicings:
-                all_voicings.append(state_list)
-            all_rewards += total_reward
-
-        return all_rewards
     
     def train_melody_harm(self, melodies, num_epochs=1000): 
         ###  TRAINING LOOP ###
