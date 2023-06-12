@@ -3,6 +3,15 @@ import yaml
 from midi2audio import FluidSynth
 import os
 from pathlib import Path
+import numpy as np
+import pretty_midi
+import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
+from tqdm import tqdm
+from pathlib import Path
+from numpy import ndarray
+import os
+import sys
 
 def get_free_filename(stub, suffix='', directory='./results/', date=False):
     # Create unique file/directory 
@@ -63,8 +72,74 @@ def midis_to_wavs(midi_dir, wav_dir=None):
         print("MIDI", midi)
         midi_to_wav(str(midi_dir) +'/'+ midi, str(wav_dir) +'/'+ midi[:-3]+'wav')
 
+def get_fs(tempo, measure_subdivision):
+    time_per_quarter_note = 1/ (tempo/60)
+    further_div = measure_subdivision/4
+    column_spacing = time_per_quarter_note/further_div
+    return 1/column_spacing
+
+def custom_plot_pianoroll(
+    ax: Axes,           # no default
+    pianoroll: ndarray, # no default
+    minc: int = -1, maxc: int = 7, resolution: int = 24,
+    cmap: str = "Blues", grid_axis: str = "both",
+    grid_linestyle: str = ":", grid_linewidth: float = 0.5,
+    vmax=1, ymin=None, ymax=None, **kwargs,):
+
+    img = ax.imshow(
+        pianoroll,
+        cmap=cmap,
+        aspect="auto",
+        vmin=0,
+        vmax=vmax, # if pianoroll.dtype == np.bool_ else 127,
+        origin="lower",
+        interpolation="none",
+        **kwargs,
+    )
+
+    ax.set_yticks(np.arange(12*(minc+2), 12*(maxc+3), 12))
+    ax.set_yticklabels([f"C{minc+i}" for i in range(maxc-minc+1)], fontsize=12)
+
+    nonzero_row_indices = np.nonzero(np.count_nonzero(pianoroll, axis=1))
+    if not ymin:
+        ymin = np.min(nonzero_row_indices) - 12
+    if not ymax: 
+        ymax = np.max(nonzero_row_indices) + 12
+
+    ax.set_ylim([ymin, ymax])
+    ax.set_ylabel("Pitch", fontsize=14)
+
+    # Format x-axis
+    ax.set_xticks(np.arange(-0.5, pianoroll.shape[1], resolution)) # put labels
+    ax.set_xticklabels(np.arange(0, pianoroll.shape[1]//resolution +1, 1), fontsize=12)
+    ax.set_xlim([-0.5, pianoroll.shape[1]])
+    ax.set_xlabel("Time (beats)", fontsize=14)
+
+    if grid_axis != "off":
+        ax.grid(
+            axis='x', # or "both"
+            color="k",
+            linestyle=grid_linestyle,
+            linewidth=grid_linewidth,
+        )
+    return img
+
 if __name__ == "__main__":
-    midis_to_wavs('./results/free_results/')
+    # Loading a file on disk using PrettyMidi, and show
+    pm = pretty_midi.PrettyMIDI("./results/free_results/free_trial-6.mid")
+    measure_subdiv=1
+    tempo = pm.get_tempo_changes()[1][0]
+    fs= 4
+    print(fs)
+    print("Tempo:", tempo)
+    pianoroll = pm.instruments[0].get_piano_roll(fs=fs)
+    _, ax = plt.subplots()
+    ax  = custom_plot_pianoroll(ax, pianoroll, resolution=2)
+
+    ax.figure.set_size_inches(20, 5)
+    plt.show()
+
+    #midis_to_wavs('./results/free_results/')
 
     '''
     - 52
