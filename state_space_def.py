@@ -70,7 +70,8 @@ def determine_chord_validity(cur_combo): #, root):
     #if cur_combo[0] in root: #forces root position
     if cur_combo[0] in bass_range and cur_combo[1] in tenor_range and cur_combo[2] in alto_range and cur_combo[3] in soprano_range:
         if cur_combo[2] - cur_combo[1] <= 12 and cur_combo[3] - cur_combo[2] <= 12:
-            return True
+            if len(set(cur_combo)) > 2: # need more than 2 distinct notes
+                return True
     return False
 
 def gen_seventh_options(chord_num):
@@ -204,7 +205,6 @@ def generate_chord_dictionaries():
         yaml.dump(state_dict, outfile, default_flow_style=False)
 
     for key in chord_dict:
-        print("KEY")
         for idx in chord_dict[key]:
             inverse_chord_dict[idx] = key
 
@@ -215,14 +215,19 @@ def generate_chord_dictionaries():
 
 if __name__ == "__main__":
     # load state dict
+    generate_chord_dictionaries()
+    '''
     with open('./dictionaries/state_dict_2.yaml', 'r') as file:
         state_dict = yaml.safe_load(file)
+
+    print(len(state_dict.keys()))
+    input("Continue...")
     idx_list = [19, 240, 592, 943, 2]
     voicing_list = [state_dict[i] for i in idx_list]
     print("VOICINGS", voicing_list)
     chord_strings = [chord_and_inversion_string(i) for i in  voicing_list]
     print("CHORD STRINGS:", chord_strings)
-    '''
+
     Verify noteset indices are what we expect
     for c in notesets[0]: # cs 
         print(pretty_midi.note_number_to_name(c))

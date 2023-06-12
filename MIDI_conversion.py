@@ -62,3 +62,13 @@ def midis_to_wavs(midi_dir, wav_dir=None):
     for midi in midi_list: 
         print("MIDI", midi)
         midi_to_wav(str(midi_dir) +'/'+ midi, str(wav_dir) +'/'+ midi[:-3]+'wav')
+
+if __name__ == "__main__":
+    midis_to_wavs('./results/free_results/')
+
+    '''
+    - 52
+    - 53
+    - 60
+    - 69
+    '''

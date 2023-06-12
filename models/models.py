@@ -12,12 +12,11 @@ def flipCoin(p):
   return r < p 
 
 class Qlearner():
-    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2, numStates = 1093):
+    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2):
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
         self.Qvalues = 0 # some matrix
-        self.numStates = numStates
 
         with open('./dictionaries/chord_dict_2.yaml', 'r') as file:
             self.chord_dict = yaml.safe_load(file)
@@ -25,7 +24,15 @@ class Qlearner():
         with open('./dictionaries/state_dict_2.yaml', 'r') as file:
             self.state_indices = yaml.safe_load(file)
 
+        self.numStates = len(self.state_indices.keys())
+
         self.Qvalues = np.zeros((self.numStates,self.numStates))
+
+    def saveModel(self, modelpath):
+        np.save(modelpath, self.Qvalues)
+
+    def loadModel(self, modelpath):
+        self.Qvalues = np.load(modelpath)
     
     def getQValue(self, state, next_state):
         """
@@ -44,8 +51,8 @@ class Qlearner():
  
 # Class freelancer inherits EMP
 class VoicingModel(Qlearner):
-    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2, numStates = 1093):
-        super().__init__(alpha, gamma, epsilon, numStates)
+    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2):
+        super().__init__(alpha, gamma, epsilon)
         self.results_dir = './results/voicing_results/'
 
     def calculateRewards(self, state, next_state):
@@ -161,7 +168,7 @@ class VoicingModel(Qlearner):
                     # update q_val
                     self.update(cur_state, next_state, reward, chord_prog[j+2])
                     cur_state=next_state
-                    
+
             epoch_rewards.append(epoch_reward)
         return epoch_rewards   
 
@@ -217,8 +224,8 @@ class VoicingModel(Qlearner):
 
 
 class HarmonizationModel(Qlearner):
-    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2, numStates = 1093):
-        super().__init__(alpha, gamma, epsilon, numStates)
+    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2):
+        super().__init__(alpha, gamma, epsilon)
         self.results_dir = './results/harmonization_results/'
 
     def calculateRewards(self, state, next_state):
@@ -397,8 +404,8 @@ class HarmonizationModel(Qlearner):
         return all_voicings, all_rewards    
 
 class FreeModel(Qlearner):
-    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2, numStates = 1093):
-        super().__init__(alpha, gamma, epsilon, numStates)
+    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2):
+        super().__init__(alpha, gamma, epsilon)
         self.results_dir = './results/free_results/'
 
 
@@ -490,7 +497,7 @@ class FreeModel(Qlearner):
     def trainAgent(self, length=8, num_epochs=5000):
         epoch_rewards = []
         for i in range(num_epochs):
-            if i%50 == 0:
+            if i%500 == 0:
                 print("epoch:", i)
             epoch_reward=0
             for j in range(length):
@@ -512,7 +519,7 @@ class FreeModel(Qlearner):
         all_generations = []
         all_rewards = []
         print(num_generations)
-        for i in range(num_generations):
+        for i in range(num_generations-1):
             print("GENERATION:", i)
             state_list = []
             total_reward = 0
