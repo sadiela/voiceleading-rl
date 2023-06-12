@@ -4,8 +4,7 @@ from midi2audio import FluidSynth
 import os
 from pathlib import Path
 
-def get_free_filename(stub, suffix='', date=False):
-    directory = Path('./results/')
+def get_free_filename(stub, suffix='', directory='./results/', date=False):
     # Create unique file/directory 
     counter = 0
     while True:
@@ -26,8 +25,8 @@ def get_free_filename(stub, suffix='', date=False):
                 Path(file_candidate).mkdir()
             return file_candidate
 
-def state_seq_to_MIDI(state_seq, state_indices, desired_fstub='seqmid'): 
-    desired_filename = get_free_filename(desired_fstub, '.mid')
+def state_seq_to_MIDI(state_seq, state_indices, dir, desired_fstub='seqmid'): 
+    desired_filename = get_free_filename(desired_fstub, '.mid', directory=dir)
     # Create a PrettyMIDI object
     midi_obj = pretty_midi.PrettyMIDI() # init tempo is 120, so a quarter note is 0.5 sec
     # Create an Instrument instance for a cello instrument
@@ -54,6 +53,7 @@ def midi_to_wav(midi_path,wav_path):
     fs.midi_to_audio(midi_path, wav_path)
 
 def midis_to_wavs(midi_dir, wav_dir=None):
+    print("MIDI DIR:", midi_dir)
     print("Converting!")
     if wav_dir == None: 
         wav_dir = midi_dir
@@ -62,17 +62,3 @@ def midis_to_wavs(midi_dir, wav_dir=None):
     for midi in midi_list: 
         print("MIDI", midi)
         midi_to_wav(str(midi_dir) +'/'+ midi, str(wav_dir) +'/'+ midi[:-3]+'wav')
-
-
-if __name__ == "__main__":
-
-    with open('state_dict.yaml', 'r') as file:
-        state_indices = yaml.safe_load(file)   
-
-    seq = [20, 74, 99, 9, 74, 99, 9, 122, 34, 99, 9]
-
-    results_dir = './results/'
-    desired_fname = './results/state_to_midi_test.mid'
-
-    state_seq_to_MIDI(seq, desired_fname, state_indices)
-    midis_to_wavs(results_dir)
