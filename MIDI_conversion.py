@@ -126,7 +126,7 @@ def custom_plot_pianoroll(
 
 if __name__ == "__main__":
     # Loading a file on disk using PrettyMidi, and show
-    pm = pretty_midi.PrettyMIDI("./results/free_results/free_trial-6.mid")
+    pm = pretty_midi.PrettyMIDI("./results/voicing_results/voicing-1.mid")
     measure_subdiv=1
     tempo = pm.get_tempo_changes()[1][0]
     fs= 4
@@ -137,7 +137,8 @@ if __name__ == "__main__":
     ax  = custom_plot_pianoroll(ax, pianoroll, resolution=2)
 
     ax.figure.set_size_inches(20, 5)
-    plt.show()
+    plt.savefig('./results/voicing_results/voicing-1.png',bbox_inches="tight")
+
 
     #midis_to_wavs('./results/free_results/')
 

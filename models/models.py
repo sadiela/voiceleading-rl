@@ -25,6 +25,7 @@ class Qlearner():
             self.state_indices = yaml.safe_load(file)
 
         self.numStates = len(self.state_indices.keys())
+        print("NUMSTATES:", self.numStates)
 
         self.Qvalues = np.zeros((self.numStates,self.numStates))
 
@@ -48,6 +49,42 @@ class Qlearner():
 
     def getValue(self, state):
         return self.computeValueFromQValues(state)
+    
+    def getLegalActions(self, context=None):
+        print("DEFAULT GET LEGAL ACTIONS")
+        return list(range(0,self.numStates))
+    
+    def computeActionValuesFromQValues(self, state, legal_actions): 
+        ### DO SOME ERROR CHECKING
+        action_val_pairs = [] 
+        for next_action in legal_actions: 
+            curQ = self.getQValue(state, next_action)
+            action_val_pairs.append((next_action, curQ))
+        action_val_pairs.sort(key=lambda x: x[1], reverse=True)
+        return action_val_pairs
+    
+    def getAction(self, state=None, context=-2, best=False):
+        if context==-1:
+            print("NO LEGAL MOVE")
+            return None 
+        legal_actions = self.getLegalActions(context)
+        if state is None:
+            return random.choice(legal_actions)
+        else:
+            best_action, _ = self.computeActionFromQValues(state, legal_actions)
+            if best==True:
+                return best_action
+            else: 
+                if flipCoin(self.epsilon):
+                    return random.choice(legal_actions) # this includes the best action... is that what i want? 
+                else: 
+                    return best_action
+                
+    def update(self, state, action, reward, context=None):
+        cur_qval=self.getQValue(state,action)
+        legal_actions = self.getLegalActions(context=context)
+        _, next_best_qval = self.computeActionValuesFromQValues(state=action, context=context, legal_actions=legal_actions)
+        self.Qvalues[(state, action)] = cur_qval + self.alpha*(reward + self.gamma*next_best_qval - cur_qval)
  
 # Class freelancer inherits EMP
 class VoicingModel(Qlearner):
@@ -63,88 +100,12 @@ class VoicingModel(Qlearner):
         # negative reward for voice crossing
         return voice_leading_reward_function(cur_start, cur_end)
     
-    def computeValueFromQValues(self, state, next_chord):
-        """
-          Returns max_action Q(state,action)
-          where the max is over options for action.  Note that if
-          there are no legal actions, which is the case at the
-          terminal state, you should return a value of 0.0.
-        """
-        if next_chord not in self.chord_dict.keys(): # no legal actions
-            return 0.0
-        next_actions = self.chord_dict[next_chord]
-        #print("ACTIONS:", actions)
-        if next_actions == None or len(next_actions) == 0: # no legal actions
-            return 0.0
-        
-        action_val_pairs = []
-        for next_action in next_actions:
-            curQ = self.getQValue(state, next_action)
-            action_val_pairs.append((next_action, curQ))
-        # sort list of tuples
-        action_val_pairs.sort(key = lambda x: x[1], reverse=True) 
-        return action_val_pairs[0][1] # chose max value
-    
-    def computeActionFromQValues(self, state, next_chord):
-        """
-          Compute the best action to take in a state.  Note that if there
-          are no legal actions, which is the case at the terminal state,
-          you should return None.
-          The legal actions are determined by the next_chord argument
-        """
-        if next_chord not in self.chord_dict.keys():
-            print("NO LEGAL ACTIONS")
-            return None
-        next_actions = self.chord_dict[next_chord]
-        if next_actions == None or len(next_actions) == 0:
-            return None
-        
-        action_val_pairs = []
-        for next_action in next_actions:
-            curQ = self.getQValue(state, next_action) # which transition gives highest q? 
-            action_val_pairs.append((next_action, curQ))
-        # sort list of tuples
-        action_val_pairs.sort(key = lambda x: x[1], reverse=True) 
-
-        return action_val_pairs[0][0]
-    
-    def getAction(self, next_chord, state=None, best=False): # first time won't have a state
-        """
-          Compute the action to take in the current state.  With
-          probability self.epsilon, we should take a random action and
-          take the best policy action otherwise.  Note that if there are
-          no legal actions, which is the case at the terminal state, you
-          should choose None as the action.
-          Legal actions are determined by next_chord
-        """
-        if next_chord == -1:
-            print("NO LEGAL MOVE!")
-            return None
-        legal_actions = self.chord_dict[next_chord]
-        if state is None: ### INITIAL STATE, CHOOSE RANDOMLY? OR CHOOSE ONE WITH HIGHEST Q VAL ###
-            return random.choice(legal_actions)
-        else: 
-            best_action = self.computeActionFromQValues(state, next_chord)
-            if best==True:
-                return best_action
-            else: 
-                if flipCoin(self.epsilon):
-                    return random.choice(legal_actions) # this includes the best action... is that what i want? 
-                else: 
-                    return best_action
+    def getLegalActions(self, context=None):
+        if context==None:
+            print("ERROR, CHORD NOT PROVIDED")
+            sys.exit(-1)
+        return self.chord_dict[context]
                 
-    def update(self, state, action, reward, next_chord):
-        """
-          The parent class calls this to observe a
-          state = action => next_state and reward transition.
-          You should do your Q-Value update here
-        """
-        cur_qval = self.getQValue(state, action)
-        # HAVE A Q VAL FOR EACH STATE-STATE PAIR
-        next_best_qval = self.computeValueFromQValues(action, next_chord)
-        # Will just be 0 if terminal
-        self.Qvalues[(state, action)] = cur_qval + self.alpha*(reward + self.gamma*next_best_qval - cur_qval)
-
     def trainAgent(self, chord_progressions, num_epochs=1000):
         epoch_rewards = []
         for i in range(1,num_epochs):
@@ -157,16 +118,16 @@ class VoicingModel(Qlearner):
                         break
                     if j == 0:
                         # choose starting state
-                        cur_state = self.getAction(chord_prog[j])
+                        cur_state = self.getAction(context=chord_prog[j])
                     # choose an action
-                    chosen_action = self.getAction(chord_prog[j+1], cur_state)
+                    chosen_action = self.getAction(state=cur_state, context=chord_prog[j+1])
                     next_state = chosen_action # peform the chosen action and transition to the next state
 
                     # receive reward
-                    reward, _,_,_,_ = self.calculateRewards(cur_state, next_state)
+                    reward,_,_,_,_ = self.calculateRewards(cur_state, next_state)
                     epoch_reward += reward
                     # update q_val
-                    self.update(cur_state, next_state, reward, chord_prog[j+2])
+                    self.update(cur_state, next_state, reward, context=chord_prog[j+2])
                     cur_state=next_state
 
             epoch_rewards.append(epoch_reward)
@@ -187,11 +148,11 @@ class VoicingModel(Qlearner):
                 if chord_progression[j+1] == -1: # DONE WITH LOOP!
                     break
                 if j == 0: # choose starting state
-                    cur_state = self.getAction(chord_progression[j], best=True)
+                    cur_state = self.getAction(context=chord_progression[j], best=True)
                     state_list.append(cur_state)
 
                 # choose an action (i.e., the next state)
-                chosen_action = self.getAction(chord_progression[j+1], cur_state, best=True)
+                chosen_action = self.getAction(state=cur_state, context=chord_progression[j+1], best=True)
                 
                 next_state = chosen_action
                 state_list.append(next_state)
@@ -238,97 +199,16 @@ class HarmonizationModel(Qlearner):
         harm_prog_reward = harmonic_prog_reward_major(cur_start, cur_end)
         return vl_reward + harm_prog_reward, vc,p58,il,d58
 
-    def getLegalChords(self,pitch):
+    def getLegalActions(self,context=None):
+        if context==None:
+            print("ERROR, MELODY NOT PROVIDED")
+        print("Harmonization legality check ")
         legal_chords = []
         for chord in self.state_indices.keys():
-            if self.state_indices[chord][-1] == pitch:
+            if self.state_indices[chord][-1] == context:
                 legal_chords.append(chord)
         return legal_chords
 
-    def computeValueFromQValues(self, state, next_pitch):
-        """
-          Returns max_action Q(state,action)
-          where the max is over options for action.  Note that if
-          there are no legal actions, which is the case at the
-          terminal state, you should return a value of 0.0.
-        """
-        if next_pitch == -1: #not in self.chord_dict.keys(): # no legal actions
-            return 0.0
-        next_actions = self.getLegalChords(next_pitch)
-        #print("ACTIONS:", actions)
-        if next_actions == None or len(next_actions) == 0: # no legal actions
-            return 0.0
-        
-        action_val_pairs = []
-        for next_action in next_actions:
-            curQ = self.getQValue(state, next_action)
-            action_val_pairs.append((next_action, curQ))
-        # sort list of tuples
-        action_val_pairs.sort(key = lambda x: x[1], reverse=True) 
-        return action_val_pairs[0][1] # chose max value
-
-    def computeActionFromQValues(self, state, next_pitch):
-        """
-          Compute the best action to take in a state.  Note that if there
-          are no legal actions, which is the case at the terminal state,
-          you should return None.
-          The legal actions are determined by the next_chord argument
-        """
-        if next_pitch == -1: # not in self.chord_dict.keys():
-            print("NO LEGAL ACTIONS")
-            return None
-        next_actions = self.getLegalChords(next_pitch)
-        if next_actions == None or len(next_actions) == 0:
-            return None
-        
-        action_val_pairs = []
-        for next_action in next_actions:
-            curQ = self.getQValue(state, next_action) # which transition gives highest q? 
-            action_val_pairs.append((next_action, curQ))
-        # sort list of tuples
-        action_val_pairs.sort(key = lambda x: x[1], reverse=True) 
-
-        return action_val_pairs[0][0]
-
-    def getAction(self, next_pitch, state=None, best=False): # first time won't have a state
-        """
-          Compute the action to take in the current state.  With
-          probability self.epsilon, we should take a random action and
-          take the best policy action otherwise.  Note that if there are
-          no legal actions, which is the case at the terminal state, you
-          should choose None as the action.
-          Legal actions are determined by next_chord
-        """
-        #print(next_chord)
-        if next_pitch == -1:
-            print("NO LEGAL MOVE!")
-            return None
-        # legal actions are chords where the top note is the provided pitch 
-        legal_actions = self.getLegalChords(next_pitch)
-        if state is None: ### INITIAL STATE, CHOOSE RANDOMLY? OR CHOOSE ONE WITH HIGHEST Q VAL ###
-            return random.choice(legal_actions)
-        else: 
-            best_action = self.computeActionFromQValues(state, next_pitch)
-            if best==True:
-                return best_action
-            else: 
-                if flipCoin(self.epsilon):
-                    return random.choice(legal_actions) # this includes the best action... is that what i want? 
-                else: 
-                    return best_action
-
-    def update(self, state, action, reward, next_pitch):
-        """
-          The parent class calls this to observe a
-          state = action => next_state and reward transition.
-          You should do your Q-Value update here
-        """
-        cur_qval = self.getQValue(state, action)
-        # HAVE A Q VAL FOR EACH STATE-STATE PAIR
-        next_best_qval = self.computeValueFromQValues(action, next_pitch)
-        # Will just be 0 if terminal
-        self.Qvalues[(state, action)] = cur_qval + self.alpha*(reward + self.gamma*next_best_qval - cur_qval)
-    
     def trainAgent(self, melodies, num_epochs=1000):
         epoch_rewards = []
         for i in range(1,num_epochs):
@@ -341,16 +221,16 @@ class HarmonizationModel(Qlearner):
                         break
                     if j == 0:
                         # choose starting state
-                        cur_state = self.getAction(melody[j])
+                        cur_state = self.getAction(context=melody[j])
                     # choose an action
-                    chosen_action = self.getAction(melody[j+1], cur_state)
+                    chosen_action = self.getAction(state=cur_state, context=melody[j+1])
                     next_state = chosen_action # peform the chosen action and transition to the next state
 
                     # receive reward
                     reward, vc,p58,il,d58 = self.calculateRewards(cur_state, next_state)
                     epoch_reward += reward
                     # update q_val
-                    self.update(cur_state, next_state, reward, melody[j+2])
+                    self.update(cur_state, next_state, reward, context=melody[j+2])
                     cur_state=next_state
 
             epoch_rewards.append(epoch_reward)
@@ -370,11 +250,11 @@ class HarmonizationModel(Qlearner):
                 if melody[j+1] == -1: # DONE WITH LOOP!
                     break
                 if j == 0: # choose starting state
-                    cur_state = self.getAction(melody[j], best=True)
+                    cur_state = self.getAction(context=melody[j], best=True)
                     state_list.append(cur_state)
 
                 # choose an action (i.e., the next state)
-                chosen_action = self.getAction(melody[j+1], cur_state, best=True)
+                chosen_action = self.getAction(state=cur_state, context=melody[j+1], best=True)
                 
                 next_state = chosen_action
                 state_list.append(next_state)
@@ -403,11 +283,10 @@ class HarmonizationModel(Qlearner):
 
         return all_voicings, all_rewards    
 
-class FreeModel(Qlearner):
+class FreeModel(Qlearner): # uses default getLegalActions
     def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2):
         super().__init__(alpha, gamma, epsilon)
         self.results_dir = './results/free_results/'
-
 
     def calculateRewards(self, state, next_state):
         # for this model, don't care about harmonic progression rewards
@@ -418,81 +297,6 @@ class FreeModel(Qlearner):
         vl_reward, vc,p58,il,d58 =  voice_leading_reward_function(cur_start, cur_end)
         harm_prog_reward = harmonic_prog_reward_major(cur_start, cur_end)
         return vl_reward + harm_prog_reward, vc,p58,il,d58
-
-    def computeValueFromQValues(self, state):
-        """
-          Returns max_action Q(state,action)
-          where the max is over options for action.  Note that if
-          there are no legal actions, which is the case at the
-          terminal state, you should return a value of 0.0.
-        """
-        next_actions = list(range(0,self.numStates))
-        #print("ACTIONS:", actions)
-        if next_actions == None or len(next_actions) == 0: # no legal actions
-            return 0.0
-        
-        action_val_pairs = []
-        for next_action in next_actions:
-            curQ = self.getQValue(state, next_action)
-            action_val_pairs.append((next_action, curQ))
-        # sort list of tuples
-        action_val_pairs.sort(key = lambda x: x[1], reverse=True) 
-        return action_val_pairs[0][1] # chose max value
-
-    def computeActionFromQValues(self, state):
-        """
-          Compute the best action to take in a state.  Note that if there
-          are no legal actions, which is the case at the terminal state,
-          you should return None.
-          The legal actions are determined by the next_chord argument
-        """
-        next_actions = list(range(0,self.numStates))
-        if next_actions == None or len(next_actions) == 0:
-            return None
-        
-        action_val_pairs = []
-        for next_action in next_actions:
-            curQ = self.getQValue(state, next_action) # which transition gives highest q? 
-            action_val_pairs.append((next_action, curQ))
-        # sort list of tuples
-        action_val_pairs.sort(key = lambda x: x[1], reverse=True) 
-
-        return action_val_pairs[0][0]
-
-    def getAction(self, state=None, best=False): # first time won't have a state
-        """
-          Compute the action to take in the current state.  With
-          probability self.epsilon, we should take a random action and
-          take the best policy action otherwise.  Note that if there are
-          no legal actions, which is the case at the terminal state, you
-          should choose None as the action.
-          Legal actions are determined by next_chord
-        """
-        #print(next_chord)
-        legal_actions = list(range(0,self.numStates))# anything! whole state space
-        if state is None: ### INITIAL STATE, CHOOSE RANDOMLY? OR CHOOSE ONE WITH HIGHEST Q VAL ###
-            return random.choice(legal_actions)
-        else: 
-            best_action = self.computeActionFromQValues(state)
-            if best==True:
-                return best_action
-            else: 
-                if flipCoin(self.epsilon):
-                    return random.choice(legal_actions) # this includes the best action... is that what i want? 
-                else: 
-                    return best_action
-
-    def update(self, state, action, reward):
-        """
-          The parent class calls this to observe a
-          state = action => next_state and reward transition.
-          You should do your Q-Value update here
-        """
-        cur_qval = self.getQValue(state, action)
-        # HAVE A Q VAL FOR EACH STATE-STATE PAIR
-        next_best_qval = self.computeValueFromQValues(action)
-        # Will just be 0 if terminal
-        self.Qvalues[(state, action)] = cur_qval + self.alpha*(reward + self.gamma*next_best_qval - cur_qval)
     
     def trainAgent(self, length=8, num_epochs=5000):
         epoch_rewards = []
@@ -504,13 +308,13 @@ class FreeModel(Qlearner):
                 if j == 0:
                     cur_state = self.getAction()
 
-                chosen_action = self.getAction(cur_state)
+                chosen_action = self.getAction(state=cur_state)
                 next_state = chosen_action
                 
                 reward, _,_,_,_ = self.calculateRewards(cur_state, next_state)
                 epoch_reward += reward
 
-                self.update(cur_state, next_state, reward)
+                self.update(cur_state, next_state, reward, context=None)
                 cur_state=next_state
             epoch_rewards.append(epoch_reward)
         return epoch_rewards
@@ -519,7 +323,7 @@ class FreeModel(Qlearner):
         all_generations = []
         all_rewards = []
         print(num_generations)
-        for i in range(num_generations-1):
+        for i in range(num_generations):
             print("GENERATION:", i)
             state_list = []
             total_reward = 0
@@ -527,13 +331,13 @@ class FreeModel(Qlearner):
             num_parallels = 0
             num_illegal_leaps = 0
             num_direct = 0
-            for i in range(length):
+            for i in range(length-1):
                 if i == 0: # choose starting state
                     cur_state = self.getAction()
                     state_list.append(cur_state)
 
                 # choose an action (i.e., the next state)
-                chosen_action = self.getAction(cur_state, best=True)
+                chosen_action = self.getAction(state=cur_state, best=True)
                 
                 next_state = chosen_action
                 state_list.append(next_state)
