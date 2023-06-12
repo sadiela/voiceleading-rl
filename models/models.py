@@ -12,7 +12,7 @@ def flipCoin(p):
   return r < p 
 
 class Qlearner():
-    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2):
+    def __init__(self, alpha=0.1, gamma=1, epsilon=0.3):
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
