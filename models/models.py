@@ -12,7 +12,7 @@ def flipCoin(p):
   return r < p 
 
 class Qlearner():
-    def __init__(self, alpha=0.1, gamma=1, epsilon=0.3):
+    def __init__(self, alpha=0.1, gamma=.9, epsilon=0.3):
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
@@ -25,7 +25,7 @@ class Qlearner():
             self.state_indices = yaml.safe_load(file)
 
         self.numStates = len(self.state_indices.keys())
-        print("NUMSTATES:", self.numStates)
+        #print("NUMSTATES:", self.numStates)
 
         self.Qvalues = np.zeros((self.numStates,self.numStates))
 
@@ -36,32 +36,28 @@ class Qlearner():
         self.Qvalues = np.load(modelpath)
     
     def getQValue(self, state, next_state):
-        """
-          Returns Q(state,action)
-          Should return 0.0 if we have never seen a state
-          or the Q node value otherwise
-        """
-        return self.Qvalues[(state,next_state)] # do I have to do something to handle when we've never sean a state? 
-        #util.raiseNotDefined()
+        return self.Qvalues[(state,next_state)]
 
-    def getPolicy(self, state):
-        return self.computeActionFromQValues(state)
+    '''def getPolicy(self, state):
+        action, val = self.computeActionValuesFromQValues(state)
+        return action'''
 
     def getValue(self, state):
         return self.computeValueFromQValues(state)
     
     def getLegalActions(self, context=None):
-        print("DEFAULT GET LEGAL ACTIONS")
         return list(range(0,self.numStates))
     
     def computeActionValuesFromQValues(self, state, legal_actions): 
         ### DO SOME ERROR CHECKING
+        if len(legal_actions)==0:
+            return None, 0.0
         action_val_pairs = [] 
         for next_action in legal_actions: 
             curQ = self.getQValue(state, next_action)
             action_val_pairs.append((next_action, curQ))
         action_val_pairs.sort(key=lambda x: x[1], reverse=True)
-        return action_val_pairs
+        return action_val_pairs[0]
     
     def getAction(self, state=None, context=-2, best=False):
         if context==-1:
@@ -71,8 +67,8 @@ class Qlearner():
         if state is None:
             return random.choice(legal_actions)
         else:
-            best_action, _ = self.computeActionFromQValues(state, legal_actions)
-            if best==True:
+            best_action, _ = self.computeActionValuesFromQValues(state, legal_actions)
+            if best:
                 return best_action
             else: 
                 if flipCoin(self.epsilon):
@@ -82,8 +78,8 @@ class Qlearner():
                 
     def update(self, state, action, reward, context=None):
         cur_qval=self.getQValue(state,action)
-        legal_actions = self.getLegalActions(context=context)
-        _, next_best_qval = self.computeActionValuesFromQValues(state=action, context=context, legal_actions=legal_actions)
+        legal_actions = self.getLegalActions(context=context) # context can be multiple notes for harmonization model? 
+        _, next_best_qval = self.computeActionValuesFromQValues(state=action, legal_actions=legal_actions)
         self.Qvalues[(state, action)] = cur_qval + self.alpha*(reward + self.gamma*next_best_qval - cur_qval)
  
 # Class freelancer inherits EMP
@@ -104,6 +100,8 @@ class VoicingModel(Qlearner):
         if context==None:
             print("ERROR, CHORD NOT PROVIDED")
             sys.exit(-1)
+        if context == -1: 
+            return []
         return self.chord_dict[context]
                 
     def trainAgent(self, chord_progressions, num_epochs=1000):
@@ -202,10 +200,9 @@ class HarmonizationModel(Qlearner):
     def getLegalActions(self,context=None):
         if context==None:
             print("ERROR, MELODY NOT PROVIDED")
-        print("Harmonization legality check ")
         legal_chords = []
         for chord in self.state_indices.keys():
-            if self.state_indices[chord][-1] == context:
+            if self.state_indices[chord][-1] in context: #== context: 
                 legal_chords.append(chord)
         return legal_chords
 
@@ -217,11 +214,11 @@ class HarmonizationModel(Qlearner):
             epoch_reward = 0
             for melody in melodies:
                 for j, c in enumerate(melody):
-                    if melody[j+1] == -1: # DONE WITH LOOP!
+                    if melody[j+1][0] == -1: # DONE WITH LOOP!
                         break
                     if j == 0:
                         # choose starting state
-                        cur_state = self.getAction(context=melody[j])
+                        cur_state = self.getAction(context=melody[j]) # THESE SHOULD BE LISTS!!!
                     # choose an action
                     chosen_action = self.getAction(state=cur_state, context=melody[j+1])
                     next_state = chosen_action # peform the chosen action and transition to the next state
@@ -246,8 +243,8 @@ class HarmonizationModel(Qlearner):
             num_parallels = 0
             num_illegal_leaps = 0
             num_direct = 0
-            for j, c in enumerate(melody):
-                if melody[j+1] == -1: # DONE WITH LOOP!
+            for j, c in enumerate(melody): # MELODY NEEDS TO BE LIST OF LISTS!
+                if melody[j+1][0] == -1: # DONE WITH LOOP!
                     break
                 if j == 0: # choose starting state
                     cur_state = self.getAction(context=melody[j], best=True)
@@ -270,7 +267,8 @@ class HarmonizationModel(Qlearner):
 
             print("Total reward and sequence:", total_reward, state_list, chord_strings(state_list, self.state_indices))
             if state_list not in all_voicings:
-                state_seq_to_MIDI(state_list, self.state_indices, self.results_dir, desired_fstub=fname)
+                #state_seq_to_MIDI(state_list, self.state_indices, self.results_dir, desired_fstub=fname)
+                state_seq_with_melody_to_MIDI(melody, state_list, self.state_indices, self.results_dir, desired_fstub=fname)
                 all_voicings.append(state_list)
                 all_rewards.append(total_reward)
             else:

@@ -55,22 +55,58 @@ def state_seq_to_MIDI(state_seq, state_indices, dir, desired_fstub='seqmid'):
     # Write out the MIDI data
     midi_obj.write(desired_filename)
 
+def melody_to_MIDI(melody, note_length=1):
+    print("MELODY:", melody)
+    notes = []
+    #midi_obj = pretty_midi.PrettyMIDI() # init tempo is 120, so a quarter note is 0.5 sec
+    #piano = pretty_midi.Instrument(program=1)
+    for i, mel in enumerate(melody):
+        if mel[0] == -1: 
+            break
+        num_mel_notes = len(mel)
+        for j, mnote in enumerate(mel): 
+            note_obj = pretty_midi.Note(velocity=100, pitch=mnote, 
+                                        start=note_length*i + j*(note_length/num_mel_notes), 
+                                        end=note_length*i + (j+1)*(note_length/num_mel_notes))
+            notes.append(note_obj)
+    return notes
+
+def state_seq_with_melody_to_MIDI(melody, state_seq, state_indices, dir, desired_fstub='seqmid'):
+    desired_filename = get_free_filename(desired_fstub, '.mid', directory=dir)
+    # Create a PrettyMIDI object
+    midi_obj = pretty_midi.PrettyMIDI() # init tempo is 120, so a quarter note is 0.5 sec
+    piano = pretty_midi.Instrument(program=1)
+
+    melody_notes = melody_to_MIDI(melody)
+    for mel_note in melody_notes: 
+        piano.notes.append(mel_note)
+
+    for i, state in enumerate( state_seq):
+        notes = state_indices[state][:3]
+        for note in notes: 
+            note_obj = pretty_midi.Note(
+                velocity=75, pitch=note, start=1*i, end=1*i+1)
+            # Add it to our cello instrument
+            piano.notes.append(note_obj)
+
+    midi_obj.instruments.append(piano)
+    midi_obj.write(desired_filename)
+
 def midi_to_wav(midi_path,wav_path):
     #print("CONVERTING")
     # using the default sound font in 44100 Hz sample rate
-    fs = FluidSynth()
+    fs = FluidSynth(sound_font="./GeneralUser_GS_v1.471.sf2")
     fs.midi_to_audio(midi_path, wav_path)
 
 def midis_to_wavs(midi_dir, wav_dir=None):
-    print("MIDI DIR:", midi_dir)
-    print("Converting!")
+    print("MIDI DIR:", midi_dir, "WAV DIR", wav_dir)
     if wav_dir == None: 
         wav_dir = midi_dir
     midi_dir_list = os.listdir(midi_dir)
     midi_list = [f for f in midi_dir_list if f[-3:] == 'mid']
     for midi in midi_list: 
         print("MIDI", midi)
-        midi_to_wav(str(midi_dir) +'/'+ midi, str(wav_dir) +'/'+ midi[:-3]+'wav')
+        midi_to_wav(str(midi_dir) + midi, str(wav_dir) + midi[:-3]+'wav')
 
 def get_fs(tempo, measure_subdivision):
     time_per_quarter_note = 1/ (tempo/60)
@@ -124,9 +160,40 @@ def custom_plot_pianoroll(
         )
     return img
 
+def test_different_midi_instruments(pm, res_folder): 
+    for i in range(15): 
+        print("INSTRUMENT:", pretty_midi.program_to_instrument_name(i))
+        new_instr = pretty_midi.PrettyMIDI()
+        # Create an Instrument instance for a cello instrument
+        instrument = pretty_midi.Instrument(program=i)
+        for note in pm.instruments[0].notes:
+            # Create a Note instance
+            newnote = pretty_midi.Note(
+                velocity=note.velocity, pitch=note.pitch, start=note.start, end=note.end)
+            # Add it to  instrument
+            instrument.notes.append(newnote)
+        # Add the instrument to the new pretty_midi object
+        new_instr.instruments.append(instrument)
+        # Write out the MIDI data
+        new_instr.write(res_folder + pretty_midi.program_to_instrument_name(i) + '.mid')
+
+    midis_to_wavs(res_folder)
+
 if __name__ == "__main__":
-    # Loading a file on disk using PrettyMidi, and show
+
+    sys.exit(0)
+
     pm = pretty_midi.PrettyMIDI("./results/voicing_results/voicing-1.mid")
+    res_folder = "./results/midi_instr/"
+    test_different_midi_instruments(pm, res_folder)
+    
+
+    midi_path = "./results/voicing_results/voicing-1.mid"
+    wav_path = "./results/voicing_results/NEWSOUNDFONT_voicing-1.wav"
+    midi_to_wav(midi_path,wav_path)
+
+
+    # Loading a file on disk using PrettyMidi, and show
     measure_subdiv=1
     tempo = pm.get_tempo_changes()[1][0]
     fs= 4
