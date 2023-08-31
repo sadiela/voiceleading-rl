@@ -1,5 +1,8 @@
 # Ranges typical of 4-part choral music. These can be changed 
 # at the user's discretion
+# TRAINING DATA RANGES:
+# MINS: [26 37 46 52] 
+# MAXES: [63 69 73 81]
 bass_range = list(range(40,61))
 tenor_range = list(range(48,68)) 
 alto_range = list(range(55,75)) 
@@ -9,16 +12,16 @@ soprano_range = list(range(60,80)) # FINAL INDEX NOT INCLUDED!
 # the specified range (40-80 for us)
 # VERIFIED!
 notesets = [[], # Cs     0 (0,2,4,5,7,9,11)
-            [], # C#Df   1
+            [], # C#Db   1
             [], # D      2
-            [], # D#Ef   3
+            [], # D#Eb   3
             [], # E      4
             [], # F      5
-            [], # F#Gf   6
+            [], # F#Gb   6
             [], # G      7
-            [], # G#Af   8
+            [], # G#Ab   8
             [], # A      9
-            [], # A# Bf  10
+            [], # A# Bb  10
             []] # B      11
 
 for note in range(bass_range[0], soprano_range[-1]+1):
@@ -27,13 +30,13 @@ for note in range(bass_range[0], soprano_range[-1]+1):
 # list of notes that occur in each chord in C major
 # 0 = C, 2 = D, etc. 
 notes_in_chords = {
-    1: [0,4,7],
-    2: [2,5,9],
-    3: [4,7,11],
-    4: [5,9,0],
-    5: [7,11,2],
-    6: [9,0,4],
-    7: [11,2,5],
+    1: [0,4,7], # C
+    2: [2,5,9], # d
+    3: [4,7,11], # e
+    4: [5,9,0], # F
+    5: [7,11,2], # G
+    6: [9,0,4], # a
+    7: [11,2,5], # b
     8: [2,5,9,0], # 2 7th
     9: [5,9,0,4], # 4 7th 
     10: [7,11,2,5], # 5 7th 

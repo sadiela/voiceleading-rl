@@ -241,8 +241,6 @@ def note_names_to_numbers(namelist):
 
 if __name__ == "__main__":
     print("Voice leading rules unit tests:") # E2 to G5
-    print(pretty_midi.note_number_to_name(40), pretty_midi.note_number_to_name(79))
-    print(pretty_midi.note_name_to_number("C4"))
 
     ##################
     ### UNIT TESTS ###

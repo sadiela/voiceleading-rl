@@ -201,8 +201,9 @@ class HarmonizationModel(Qlearner):
         if context==None:
             print("ERROR, MELODY NOT PROVIDED")
         legal_chords = []
+        min_context = min(context)
         for chord in self.state_indices.keys():
-            if self.state_indices[chord][-1] in context: #== context: 
+            if self.state_indices[chord][-1] in context and self.state_indices[chord][2] < min_context: #== context: 
                 legal_chords.append(chord)
         return legal_chords
 
