@@ -11,6 +11,10 @@ H = B,
 B = Bflat
 '''
 
+chord_dict = {
+
+}
+
 major_shift_amounts = {
     'C': 0,
     'C#': -1,
@@ -22,14 +26,31 @@ major_shift_amounts = {
     'F':-5,
     'F#':-6,
     'Gb':-6,
-    'G':-7,
-    'G#':-8,
-    'Ab':-8,
-    'A':-9,
-    'A#':-10,
-    'Bb':-10,
-    'B':-11,
+    'G':5,
+    'G#':4,
+    'Ab':4,
+    'A':3,
+    'A#':2,
+    'Bb':2,
+    'B':1,
 }
+
+# 0 C 1 C#/Db 2 D 3 D#/Eb 4 E 5 F 
+# 6 F#/Gb 7 G 8 G#/Ab 9 A 10 A#/Bb 11 B
+
+
+def key_estimate(chorale):
+    # Chorale is a list of lists of 4 pitches representing chords
+    note_counts = {}
+    for chord in chorale: 
+        for note in chord: 
+            cur_note = note%12
+            if cur_note in note_counts.keys():
+                note_counts[cur_note] +=1
+            else: 
+                note_counts[cur_note] =1
+    sorted_notecounts = {k: v for k, v in sorted(note_counts.items(), key=lambda item: item[1])}
+    print(note_counts)
 
 def get_key_info(key_data_dir): 
     chorale_keys_major = {}
@@ -80,15 +101,18 @@ if __name__ == "__main__":
             cur_chord_sequence = []
             key = chorale_keys_maj[chorale_num]['key']
             print(chorale, key, "MAJOR, shift amount:", major_shift_amounts[key])
+            arr = pd.read_csv(training_data_dir + chorale).to_numpy()
+            unique_chords = np.array(arr[0,:]).reshape(1,4)
             if key == "C":
                 # open CSV file
-                arr = pd.read_csv(training_data_dir + chorale).to_numpy()
                 arr = np.flip(arr, 1) + major_shift_amounts[key] # flip so it goes b t a s
                 print(np.unique(arr%12))
-                previous = np.array([0,0,0,0])
+                previous = np.array(arr[0,:]).reshape(1,4)
+                print("SHAPE:", previous.shape)
                 for i in range(arr.shape[0]):
                     if not np.array_equal(arr[i,:], previous):
-                        print(arr[i,:]),
+                        unique_chords = np.concatenate((unique_chords, arr[i,:].reshape(1,4)), axis=0)
+                        print("CHORDS", unique_chords),
                         print(np.unique(arr[i,:]%12))
                         input("Continue...")
                     previous = arr[i,:]
