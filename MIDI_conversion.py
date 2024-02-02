@@ -83,7 +83,7 @@ def state_seq_with_melody_to_MIDI(melody, state_seq, state_indices, directory, d
     midi_obj = pretty_midi.PrettyMIDI() # init tempo is 120, so a quarter note is 0.5 sec
     piano = pretty_midi.Instrument(program=1)
 
-    melody_notes = melody_to_MIDI(melody)
+    melody_notes, _ = melody_to_MIDI(melody)
     for mel_note in melody_notes: 
         piano.notes.append(mel_note)
 

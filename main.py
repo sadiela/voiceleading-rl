@@ -21,18 +21,18 @@ if __name__ == "__main__":
     print(len(train_melodies), len(test_melodies))
 
     # handle out-of-range melodies!
-    harmonization_epoch_rewards = harmonization_agent.trainAgent(train_melodies, num_epochs=1000)
+    harmonization_epoch_rewards = harmonization_agent.trainAgent(train_melodies, num_epochs=10000)
+
+    harmonization_agent.saveModel('./models/harmmodel_fulldata.npy')
 
     plt.plot(harmonization_epoch_rewards)
     plt.xlabel("Training Epoch")
     plt.ylabel("Reward")
     plt.title("HARMONIZATION: Total Reward over Epoch")
-    plt.savefig('./results/harmonization_results/training_reward_.png',bbox_inches="tight")
+    plt.savefig('./results/harmonization_results/training_reward.png',bbox_inches="tight")
     plt.clf()
 
-    all_voicings, all_rewards = harmonization_agent.evalAgent(test_melodies[0], 5, fname="harmonization", synth=True)
-
-    harmonization_agent.saveModel('./models/harmmodel_fulldata.npy')
+    all_voicings, all_rewards = harmonization_agent.evalAgent(test_melodies[2], 5, fname="harmonization", synth=True)
 
     sys.exit(0)
 
