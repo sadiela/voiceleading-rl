@@ -40,7 +40,6 @@ def state_seq_to_MIDI(state_seq, state_indices, dir, desired_fstub='seqmid'):
     midi_obj = pretty_midi.PrettyMIDI() # init tempo is 120, so a quarter note is 0.5 sec
     # Create an Instrument instance for a cello instrument
     piano = pretty_midi.Instrument(program=1)
-    # Iterate over note names, which will be converted to note number later
     for i, state in enumerate(state_seq): 
         notes = state_indices[state]
         #print(notes)
@@ -54,12 +53,11 @@ def state_seq_to_MIDI(state_seq, state_indices, dir, desired_fstub='seqmid'):
     midi_obj.instruments.append(piano)
     # Write out the MIDI data
     midi_obj.write(desired_filename)
+    return desired_filename
 
-def melody_to_MIDI(melody, note_length=1):
+def melody_to_MIDI(melody, note_length=1, save=False, path='./melody.mid'): # note length in seconds
     print("MELODY:", melody)
     notes = []
-    #midi_obj = pretty_midi.PrettyMIDI() # init tempo is 120, so a quarter note is 0.5 sec
-    #piano = pretty_midi.Instrument(program=1)
     for i, mel in enumerate(melody):
         if mel[0] == -1: 
             break
@@ -69,10 +67,18 @@ def melody_to_MIDI(melody, note_length=1):
                                         start=note_length*i + j*(note_length/num_mel_notes), 
                                         end=note_length*i + (j+1)*(note_length/num_mel_notes))
             notes.append(note_obj)
-    return notes
+    if save: 
+        midi_obj = pretty_midi.PrettyMIDI()
+        piano = pretty_midi.Instrument(program=1)
+        for mel_note in notes: 
+            piano.notes.append(mel_note)
+        midi_obj.instruments.append(piano)
+        midi_obj.write(path)
+        return notes, path
+    return notes, None
 
-def state_seq_with_melody_to_MIDI(melody, state_seq, state_indices, dir, desired_fstub='seqmid'):
-    desired_filename = get_free_filename(desired_fstub, '.mid', directory=dir)
+def state_seq_with_melody_to_MIDI(melody, state_seq, state_indices, directory, desired_fstub='seqmid'):
+    desired_filename = get_free_filename(desired_fstub, '.mid', directory=directory)
     # Create a PrettyMIDI object
     midi_obj = pretty_midi.PrettyMIDI() # init tempo is 120, so a quarter note is 0.5 sec
     piano = pretty_midi.Instrument(program=1)
@@ -180,6 +186,10 @@ def test_different_midi_instruments(pm, res_folder):
     midis_to_wavs(res_folder)
 
 if __name__ == "__main__":
+
+
+
+    # UNIT TEST: melody_to_MIDI #
 
     sys.exit(0)
 

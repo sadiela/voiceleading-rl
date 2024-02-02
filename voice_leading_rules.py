@@ -4,7 +4,7 @@ from pretty_midi import note_name_to_number
 
 def illegal_leaps(state, next_state): 
     # returns number of instances of an illegal leap 
-    bass_interval = abs(next_state[0] - state[0])
+    bass_interval = abs(next_state[0] - state[0]) # BASS FIRST!!!
     tenor_interval = abs(next_state[1] - state[1])
     alto_interval = abs(next_state[2] - state[2])
     soprano_interval = abs(next_state[3] - state[3])
@@ -119,7 +119,7 @@ def leading_tone_resolution(state, next_state):
             res_step = resolution_note - note 
             if not (res_step == 1 or res_step == 2): 
                 if i == 0 or i == 3:
-                    return 2
+                    return 1
                 return 0
     return 0
 

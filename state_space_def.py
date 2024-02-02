@@ -197,18 +197,21 @@ def generate_chord_dictionaries():
             chord_dict[i+1].append(index)
             index += 1
 
+
     # save dictionaries to yaml files # 
-    with open("./dictionaries/chord_dict_2.yaml", 'w') as outfile:
+    with open("./dictionaries/chord_dict_3.yaml", 'w') as outfile:
         yaml.dump(chord_dict, outfile, default_flow_style=False)
 
-    with open("./dictionaries/state_dict_2.yaml", 'w') as outfile:
+    with open("./dictionaries/state_dict_3.yaml", 'w') as outfile:
         yaml.dump(state_dict, outfile, default_flow_style=False)
 
     for key in chord_dict:
         for idx in chord_dict[key]:
             inverse_chord_dict[idx] = key
 
-    with open("./dictionaries/inverse_chord_dict_2.yaml", 'w') as outfile:
+    print(len(inverse_chord_dict.keys()))
+
+    with open("./dictionaries/inverse_chord_dict_3.yaml", 'w') as outfile:
         yaml.dump(inverse_chord_dict, outfile, default_flow_style=False)
 
 

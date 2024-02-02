@@ -2,6 +2,7 @@
 import yaml 
 import numpy as np
 import random
+from tqdm import tqdm
 from MIDI_conversion import *
 from voice_leading_rules import *
 from harmonic_progression_rules import *
@@ -18,10 +19,10 @@ class Qlearner():
         self.epsilon = epsilon
         self.Qvalues = 0 # some matrix
 
-        with open('./dictionaries/chord_dict_2.yaml', 'r') as file:
+        with open('./dictionaries/chord_dict_3.yaml', 'r') as file:
             self.chord_dict = yaml.safe_load(file)
 
-        with open('./dictionaries/state_dict_2.yaml', 'r') as file:
+        with open('./dictionaries/state_dict_3.yaml', 'r') as file:
             self.state_indices = yaml.safe_load(file)
 
         self.numStates = len(self.state_indices.keys())
@@ -190,6 +191,7 @@ class HarmonizationModel(Qlearner):
     def calculateRewards(self, state, next_state):
         # for this model, don't care about harmonic progression rewards
         # i is starting state, j is next state
+        #print(state, next_state)
         cur_start = self.state_indices[state]
         cur_end = self.state_indices[next_state]
         # negative reward for voice crossing
@@ -210,10 +212,10 @@ class HarmonizationModel(Qlearner):
     def trainAgent(self, melodies, num_epochs=1000):
         epoch_rewards = []
         for i in range(1,num_epochs):
-            if i%500 == 0:
+            if i%10 == 0:
                 print("epoch:", i)
             epoch_reward = 0
-            for melody in melodies:
+            for melody in tqdm(melodies):
                 for j, c in enumerate(melody):
                     if melody[j+1][0] == -1: # DONE WITH LOOP!
                         break
@@ -266,16 +268,19 @@ class HarmonizationModel(Qlearner):
                 total_reward += reward
                 cur_state=next_state
 
+
             print("Total reward and sequence:", total_reward, state_list, chord_strings(state_list, self.state_indices))
             if state_list not in all_voicings:
-                #state_seq_to_MIDI(state_list, self.state_indices, self.results_dir, desired_fstub=fname)
                 state_seq_with_melody_to_MIDI(melody, state_list, self.state_indices, self.results_dir, desired_fstub=fname)
                 all_voicings.append(state_list)
                 all_rewards.append(total_reward)
             else:
-                print("Already saved voicing")
+                print("Already saved harmonization")
             print("Num voice crossings:", num_voice_crossings, "\nNum parallels:", num_parallels, "\nNum illegal leaps:", num_illegal_leaps, "\nNum direct fifths/octaves", num_direct)
             # EVALUATE STATE LIST
+
+        fname = get_free_filename('melody', '.mid', directory=self.results_dir)
+        melody_to_MIDI(melody, note_length=1, save=True, path=fname)
 
         if synth:
             midis_to_wavs(self.results_dir)
