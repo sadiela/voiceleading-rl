@@ -12,7 +12,7 @@ if __name__ == "__main__":
     ###########################
     ### HARMONIZATION MODEL ###
     ###########################
-    harmonization_agent = HarmonizationModel(gamma=0.95)
+    harmonization_agent = HarmonizationModel(gamma=0.95, alpha=0.1)
     with open('./data/jsb_major_melodies.yaml', 'r') as file:
         all_melodies = yaml.safe_load(file)
     train_melodies = all_melodies['train'] #[[[76,74],[74],[72],[74],[76,76],[76],[76],[-1]]]
@@ -21,15 +21,15 @@ if __name__ == "__main__":
     print(len(train_melodies), len(test_melodies))
 
     # handle out-of-range melodies!
-    harmonization_epoch_rewards = harmonization_agent.trainAgent(train_melodies, num_epochs=10000)
+    harmonization_epoch_rewards = harmonization_agent.trainAgent(train_melodies, num_epochs=2000)
 
-    harmonization_agent.saveModel('./models/harmmodel_fulldata.npy')
+    harmonization_agent.saveModel('./models/harmmodel_fulldata_2_16.npy')
 
     plt.plot(harmonization_epoch_rewards)
     plt.xlabel("Training Epoch")
     plt.ylabel("Reward")
-    plt.title("HARMONIZATION: Total Reward over Epoch")
-    plt.savefig('./results/harmonization_results/training_reward.png',bbox_inches="tight")
+    plt.title("HARMONIZATION: Total Reward over Epoch 2/15")
+    plt.savefig('./results/harmonization_results/training_reward_2_16.png',bbox_inches="tight")
     plt.clf()
 
     all_voicings, all_rewards = harmonization_agent.evalAgent(test_melodies[2], 5, fname="harmonization", synth=True)

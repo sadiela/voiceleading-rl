@@ -211,11 +211,11 @@ class HarmonizationModel(Qlearner):
 
     def trainAgent(self, melodies, num_epochs=1000):
         epoch_rewards = []
-        for i in range(1,num_epochs):
+        for i in tqdm(range(1,num_epochs)):
             if i%10 == 0:
-                print("epoch:", i)
+                print("epoch:", i, epoch_reward)
             epoch_reward = 0
-            for melody in tqdm(melodies):
+            for melody in melodies:
                 for j, c in enumerate(melody):
                     if melody[j+1][0] == -1: # DONE WITH LOOP!
                         break

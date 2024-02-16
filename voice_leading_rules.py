@@ -2,6 +2,15 @@
 from state_space_def import * 
 from pretty_midi import note_name_to_number
 
+ILL_LEAP =  0.1417
+VC =  0.1397
+PERF58 = 0.0402
+DIR58 = 0.1383
+ILL_CT = 0.1293
+ILL_LT_RES = 0.128
+ILL_7_APP = 0.1428
+ILL_7_RES = 0.14
+
 def illegal_leaps(state, next_state): 
     # returns number of instances of an illegal leap 
     bass_interval = abs(next_state[0] - state[0]) # BASS FIRST!!!
@@ -153,50 +162,6 @@ def seventh_resolve(state,next_state):
                     return 1 # did not resolve down by step
     return 0
 
-# RULES THAT ARE NOT DEPENDENT ON PREVIOUS STATE!
-def doubled_leading_tone(next_state):
-    leading_tone_count = 0 
-    for note in next_state:
-        if note%12 == 11:
-            leading_tone_count += 1
-    if leading_tone_count > 1:
-        return 1
-    return 0
-
-def dim_triad_first_inversion(next_state):  # WILL ONLY WORK FOR MAJOR
-    chord = determine_chord_from_voicing(next_state)
-    inversion = determine_inversion(next_state, chord)
-    if chord == 7: # diminished 7th 
-        if inversion != 1:
-            return 1
-    return 0
-
-def check_inv_triad_complete(next_state): 
-    # INVERTED TRIADS SHOULD BE COMPLETE!
-    # Return true if NOT complete
-    chord = determine_chord_from_voicing(next_state)
-    inversion = determine_inversion(next_state, chord)
-    if inversion == 1: 
-        if not is_complete(next_state, chord):
-            return 1
-    return 0
-
-def second_inversion_triad_doubling(next_state): 
-    # return true if INCORRECT doubling
-    chord = determine_chord_from_voicing(next_state)
-    inversion = determine_inversion(next_state, chord)
-    if inversion == 2 and chord < 8:
-        # 5th should be doubled
-        fifth = notes_in_chords[chord][2]
-        num_fifths = 0
-        for pitch in next_state:
-            if pitch%12 == fifth:
-                num_fifths += 1
-        if num_fifths >=2:
-            return 0
-        else:
-            return 1
-    return 0
 
 ### FULL REWARD FUNCTION ###
 def voice_leading_reward_function(state, next_state): 
@@ -208,9 +173,9 @@ def voice_leading_reward_function(state, next_state):
 
     d58 = direct_fifths_octaves(state, next_state)
 
-    lt_rew = leading_tone_resolution(state, next_state)
+    lt_res = leading_tone_resolution(state, next_state)
 
-    doubled_lt = doubled_leading_tone(next_state)
+    #doubled_lt = doubled_leading_tone(next_state)
 
     sev_app = seventh_approach(state, next_state)
     sev_res = seventh_resolve(state,next_state)
@@ -221,17 +186,18 @@ def voice_leading_reward_function(state, next_state):
 
     # FOR THESE, TRUE == ILLEGAL! BAD! DOES BREAK A RULE!
 
-    inv_triad_complete = check_inv_triad_complete(next_state)
 
     bad_ct = illegal_common_tones(state, next_state)
 
-    triad_first_inv = dim_triad_first_inversion(next_state)
+    #inv_triad_complete = check_inv_triad_complete(next_state)
 
-    ts_inv_doubling = second_inversion_triad_doubling(next_state)
+    #dim_triad_first_inv = dim_triad_first_inversion(next_state)
 
-    dim_t_inv = dim_triad_first_inversion(next_state)
+    #ts_inv_doubling = second_inversion_triad_doubling(next_state)
 
-    return -.2*vc + -.1*p58 + -.2*ill + -.1*d58 + -.05*lt_rew+ -.1*doubled_lt + -.05*bad_ct + -.05*triad_first_inv + -.05*ts_inv_doubling + -.05*dim_t_inv + -.2*inv_triad_complete + -.1*sev_res+ -.1*sev_app, vc, p58, ill, d58
+
+    return -VC*vc + -PERF58*p58 + -ILL_LEAP*ill + -DIR58*d58 + -ILL_LT_RES*lt_res+ -ILL_CT*bad_ct +  -ILL_7_RES*sev_res+ -ILL_7_APP*sev_app, vc, p58, ill, d58
+    #  -.1*doubled_lt + -.05*triad_first_inv -.05*ts_inv_doubling + -.05*dim_t_inv +  -.2*inv_triad_complete +
 
 def note_names_to_numbers(namelist):
     numbers = []

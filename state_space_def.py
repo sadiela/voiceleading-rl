@@ -17,6 +17,53 @@ Vocabulary:
 - Incomplete chord: 
 '''
 
+########################################################
+# RULES THAT ARE NOT DEPENDENT ON PREVIOUS STATE!
+def doubled_leading_tone(next_state):
+    leading_tone_count = 0 
+    for note in next_state:
+        if note%12 == 11:
+            leading_tone_count += 1
+    if leading_tone_count > 1:
+        return 1
+    return 0
+
+def dim_triad_first_inversion(next_state):  # WILL ONLY WORK FOR MAJOR
+    chord = determine_chord_from_voicing(next_state)
+    inversion = determine_inversion(next_state, chord)
+    if chord == 7: # diminished 7th 
+        if inversion != 1:
+            return 1
+    return 0
+
+def check_inv_triad_complete(next_state): 
+    # INVERTED TRIADS SHOULD BE COMPLETE!
+    # Return true if NOT complete
+    chord = determine_chord_from_voicing(next_state)
+    inversion = determine_inversion(next_state, chord)
+    if inversion == 1: 
+        if not is_complete(next_state, chord):
+            return 1
+    return 0
+
+def second_inversion_triad_doubling(next_state): 
+    # return true if INCORRECT doubling
+    chord = determine_chord_from_voicing(next_state)
+    inversion = determine_inversion(next_state, chord)
+    if inversion == 2 and chord < 8:
+        # 5th should be doubled
+        fifth = notes_in_chords[chord][2]
+        num_fifths = 0
+        for pitch in next_state:
+            if pitch%12 == fifth:
+                num_fifths += 1
+        if num_fifths >=2:
+            return 0
+        else:
+            return 1
+    return 0
+########################################################
+
 def is_complete(voicing, chord): 
     unique_notes = [] 
     for pitch in voicing: 
@@ -71,7 +118,8 @@ def determine_chord_validity(cur_combo): #, root):
     if cur_combo[0] in bass_range and cur_combo[1] in tenor_range and cur_combo[2] in alto_range and cur_combo[3] in soprano_range:
         if cur_combo[2] - cur_combo[1] <= 12 and cur_combo[3] - cur_combo[2] <= 12:
             if len(set(cur_combo)) > 2: # need more than 2 distinct notes
-                return True
+                if not (doubled_leading_tone(cur_combo) or dim_triad_first_inversion(cur_combo) or check_inv_triad_complete(cur_combo) or second_inversion_triad_doubling(cur_combo)):
+                    return True
     return False
 
 def gen_seventh_options(chord_num):
@@ -209,7 +257,7 @@ def generate_chord_dictionaries():
         for idx in chord_dict[key]:
             inverse_chord_dict[idx] = key
 
-    print(len(inverse_chord_dict.keys()))
+    print(len(inverse_chord_dict.keys())) # 1917 chords
 
     with open("./dictionaries/inverse_chord_dict_3.yaml", 'w') as outfile:
         yaml.dump(inverse_chord_dict, outfile, default_flow_style=False)
