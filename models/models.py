@@ -227,7 +227,7 @@ class HarmonizationModel(Qlearner):
     def trainAgent(self, melodies, num_epochs=1000, epoch_rewards=[]):
         for i in tqdm(range(1,num_epochs)):
             if i%self.checkpoint == 0:
-                print("epoch:", i, epoch_reward)
+                print("epoch:", i, epoch_rewards)
                 self.saveModel('./models/harmmodel_' + datetime.today().strftime("%m_%d") + '_' + str(i) + '.p', i, epoch_rewards)
             epoch_reward = 0
             for melody in melodies:
