@@ -199,11 +199,72 @@ def voice_leading_reward_function(state, next_state):
     return -VC*vc + -PERF58*p58 + -ILL_LEAP*ill + -DIR58*d58 + -ILL_LT_RES*lt_res+ -ILL_CT*bad_ct +  -ILL_7_RES*sev_res+ -ILL_7_APP*sev_app, vc, p58, ill, d58
     #  -.1*doubled_lt + -.05*triad_first_inv -.05*ts_inv_doubling + -.05*dim_t_inv +  -.2*inv_triad_complete +
 
+
+#######################
+# HARMONIC PROG RULES #
+#######################
+major_harmonic_adjacency_matrix = [
+    [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], # I
+    [0, 0, 0, 0, 1, -1, 1, 0, 0, 1, 1], # ii
+    [0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0], # iii
+    [1, 1, 0, 0, 1, -1, 1, 1, 0, 1, 1], # IV
+    [1, -1, 0, -1, 0, 1, 0, 0, 0, 0, 0], # V
+    [0, 1, -1, 1, 0, 0, 0, 1, 1, 0, 0], # vi
+    [1, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0], # vii
+    [0, 0, 0, 0, 1, -1, 1, 0, 0, 1, 1], # ii7
+    [1, 1, 0, 0, 1, -1, 1, 1, 0, 1, 1], # IV7
+    [1, -1, 0, -1, 0, 1, 0, 0, 0, 0, 0], # V7
+    [1, -1, 0, -1, 0, 0, 0, 0, 0, 0, 0]  # vii7
+]
+
+minor_harmonic_adjacency_matrix = [
+    [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], # i
+    [0, 0, 0, 0, 1, -1, 1, 0, 0, 1, 1], # iidim
+    [0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0], # III
+    [], # 
+    [], # 
+    [], # vi
+    [], # vii
+    [], # ii7
+    [], # IV7
+    [], # V7
+    []  # vii7
+]
+
+def harmonic_prog_reward_major(state, next_state): 
+    chord_1 = determine_chord_from_voicing(state)
+    chord_2 = determine_chord_from_voicing(next_state)
+    if major_harmonic_adjacency_matrix[chord_1-1][chord_2-1] == 0:
+        return -0.3
+    elif major_harmonic_adjacency_matrix[chord_1-1][chord_2-1] == -1:
+        return -1
+    return 0
+
+
+def harmonic_prog_reward_minor(state, next_state): 
+    chord_1 = determine_chord_from_voicing(state)
+    chord_2 = determine_chord_from_voicing(next_state)
+    if minor_harmonic_adjacency_matrix[chord_1-1][chord_2-1] == 0:
+        return -0.3
+    elif minor_harmonic_adjacency_matrix[chord_1-1][chord_2-1] == -1:
+        return -1
+    return 0
+
+
+
 def note_names_to_numbers(namelist):
     numbers = []
     for name in namelist:
         numbers.append(note_name_to_number(name))
     return numbers
+
+#### MODEL REWARD FUNCTIONS ####
+def harmonization_reward_function(cur_start, cur_end): # for major 
+    vl_reward, vc,p58,il,d58 =  voice_leading_reward_function(cur_start, cur_end)
+    harm_prog_reward = harmonic_prog_reward_major(cur_start, cur_end)
+    return vl_reward + harm_prog_reward, vc,p58,il,d58
+
+
 
 if __name__ == "__main__":
     print("Voice leading rules unit tests:") # E2 to G5
@@ -360,3 +421,4 @@ if __name__ == "__main__":
     print(voice_leading_reward_function(chord2, chord3))    
     print(voice_leading_reward_function(chord3, chord4))    
     print(voice_leading_reward_function(chord4, chord5))    
+

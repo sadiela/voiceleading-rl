@@ -6,6 +6,9 @@ from tqdm import tqdm
 from MIDI_conversion import *
 from voice_leading_rules import *
 from harmonic_progression_rules import *
+import pickle
+from datetime import datetime
+import glob
 
 
 def flipCoin(p):
@@ -13,11 +16,12 @@ def flipCoin(p):
   return r < p 
 
 class Qlearner():
-    def __init__(self, alpha=0.1, gamma=.9, epsilon=0.3):
+    def __init__(self, alpha=0.1, gamma=.9, epsilon=0.3, checkpoint=500):
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
         self.Qvalues = 0 # some matrix
+        self.checkpoint = checkpoint
 
         with open('./dictionaries/chord_dict_3.yaml', 'r') as file:
             self.chord_dict = yaml.safe_load(file)
@@ -30,14 +34,40 @@ class Qlearner():
 
         self.Qvalues = np.zeros((self.numStates,self.numStates))
 
-    def saveModel(self, modelpath):
-        np.save(modelpath, self.Qvalues)
+    def saveModel(self, modelpath, epochs, rewards): # saved model is just a matrix of the Q values :)
+        data = {
+            "Q": self.Qvalues,
+            "epochs": epochs,
+            "rewards": rewards
+        }
+        with open(modelpath, 'wb') as f:
+            pickle.dump(data, f)
+        #np.save(modelpath, self.Qvalues)
 
     def loadModel(self, modelpath):
-        self.Qvalues = np.load(modelpath)
+        with open(modelpath, 'rb') as f: 
+            data = pickle.load(f)
+        self.Qvalues = data['Q']
+        return data['rewards'], data['epochs']
+        #self.Qvalues = np.load(modelpath)
+    
+    def prepModel(self, path_form):
+        epoch_rewards, completed_epochs = [],0
+        list_of_files = glob.glob(path_form) # * means all if need specific format then *.csv
+        if len(list_of_files) !=0:
+            latest_file = max(list_of_files, key=os.path.getctime)
+            epoch_rewards, completed_epochs = self.loadModel(latest_file)
+        return epoch_rewards, completed_epochs
     
     def getQValue(self, state, next_state):
         return self.Qvalues[(state,next_state)]
+    
+    def calculateRewards(self, state, next_state):
+        # for this model, don't care about harmonic progression rewards
+        # i is starting state, j is next state
+        cur_start = self.state_indices[state]
+        cur_end = self.state_indices[next_state]
+        return self.rewardFunction(state, next_state)
 
     '''def getPolicy(self, state):
         action, val = self.computeActionValuesFromQValues(state)
@@ -60,11 +90,13 @@ class Qlearner():
         action_val_pairs.sort(key=lambda x: x[1], reverse=True)
         return action_val_pairs[0]
     
-    def getAction(self, state=None, context=-2, best=False):
+    def getAction(self, state=None, context=-2, best=False, rand=False): # Set rand = TRUE for baseline comparison
         if context==-1:
             print("NO LEGAL MOVE")
             return None 
         legal_actions = self.getLegalActions(context)
+        if rand == True: # USE FOR BASELINE!!!!
+            return random.choice(legal_actions)
         if state is None:
             return random.choice(legal_actions)
         else:
@@ -85,17 +117,10 @@ class Qlearner():
  
 # Class freelancer inherits EMP
 class VoicingModel(Qlearner):
-    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2):
-        super().__init__(alpha, gamma, epsilon)
-        self.results_dir = './results/voicing_results/'
-
-    def calculateRewards(self, state, next_state):
-        # for this model, don't care about harmonic progression rewards
-        # i is starting state, j is next state
-        cur_start = self.state_indices[state]
-        cur_end = self.state_indices[next_state]
-        # negative reward for voice crossing
-        return voice_leading_reward_function(cur_start, cur_end)
+    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2, checkpoint=500, resultsdir='./results/voicing_results/'):
+        super().__init__(alpha, gamma, epsilon, checkpoint)
+        self.results_dir = resultsdir
+        self.rewardFunction = voice_leading_reward_function
     
     def getLegalActions(self, context=None):
         if context==None:
@@ -105,11 +130,11 @@ class VoicingModel(Qlearner):
             return []
         return self.chord_dict[context]
                 
-    def trainAgent(self, chord_progressions, num_epochs=1000):
-        epoch_rewards = []
+    def trainAgent(self, chord_progressions, num_epochs=1000, epoch_rewards=[]):
         for i in range(1,num_epochs):
-            if i%500 == 0:
-                print("epoch:", i)
+            if i%self.checkpoint == 0:
+                print("epoch:", i, epoch_reward)
+                self.saveModel('./models/voicingmodel_' + datetime.today().strftime("%m_%d") + '_' + i + '.p', i, epoch_rewards)
             epoch_reward = 0
             for chord_prog in chord_progressions:
                 for j, c in enumerate(chord_prog):
@@ -132,7 +157,7 @@ class VoicingModel(Qlearner):
             epoch_rewards.append(epoch_reward)
         return epoch_rewards   
 
-    def evalAgent(self, chord_progression, num_voicings, fname=None, synth=False):
+    def evalAgent(self, chord_progression, num_voicings, fname=None, synth=False, rand=False): # set rand=True for random baseline!
         all_voicings = []
         all_rewards = [] 
         for i in range(num_voicings): # create num_voicings voicings for the given chord progression!
@@ -147,11 +172,11 @@ class VoicingModel(Qlearner):
                 if chord_progression[j+1] == -1: # DONE WITH LOOP!
                     break
                 if j == 0: # choose starting state
-                    cur_state = self.getAction(context=chord_progression[j], best=True)
+                    cur_state = self.getAction(context=chord_progression[j], best=True, rand=rand)
                     state_list.append(cur_state)
 
                 # choose an action (i.e., the next state)
-                chosen_action = self.getAction(state=cur_state, context=chord_progression[j+1], best=True)
+                chosen_action = self.getAction(state=cur_state, context=chord_progression[j+1], best=True, rand=rand)
                 
                 next_state = chosen_action
                 state_list.append(next_state)
@@ -184,20 +209,10 @@ class VoicingModel(Qlearner):
 
 
 class HarmonizationModel(Qlearner):
-    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2):
-        super().__init__(alpha, gamma, epsilon)
-        self.results_dir = './results/harmonization_results/'
-
-    def calculateRewards(self, state, next_state):
-        # for this model, don't care about harmonic progression rewards
-        # i is starting state, j is next state
-        #print(state, next_state)
-        cur_start = self.state_indices[state]
-        cur_end = self.state_indices[next_state]
-        # negative reward for voice crossing
-        vl_reward, vc,p58,il,d58 =  voice_leading_reward_function(cur_start, cur_end)
-        harm_prog_reward = harmonic_prog_reward_major(cur_start, cur_end)
-        return vl_reward + harm_prog_reward, vc,p58,il,d58
+    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2, checkpoint=500, resultsdir='./results/harmonization_results/', ):
+        super().__init__(alpha, gamma, epsilon, checkpoint)
+        self.results_dir = resultsdir
+        self.rewardFunction = harmonic_prog_reward_major # specify reward function in constructor
 
     def getLegalActions(self,context=None):
         if context==None:
@@ -209,11 +224,11 @@ class HarmonizationModel(Qlearner):
                 legal_chords.append(chord)
         return legal_chords
 
-    def trainAgent(self, melodies, num_epochs=1000):
-        epoch_rewards = []
+    def trainAgent(self, melodies, num_epochs=1000, epoch_rewards=[]):
         for i in tqdm(range(1,num_epochs)):
-            if i%10 == 0:
+            if i%self.checkpoint == 0:
                 print("epoch:", i, epoch_reward)
+                self.saveModel('./models/harmmodel_' + datetime.today().strftime("%m_%d") + '_' + i + '.p', i, epoch_rewards)
             epoch_reward = 0
             for melody in melodies:
                 for j, c in enumerate(melody):
@@ -236,7 +251,7 @@ class HarmonizationModel(Qlearner):
             epoch_rewards.append(epoch_reward)
         return epoch_rewards
     
-    def evalAgent(self, melody, num_voicings, fname=None, synth=False):
+    def evalAgent(self, melody, num_voicings, fname=None, synth=False, rand=False): # set rand=True to compare to random baseline 
         all_voicings = []
         all_rewards = []
         for i in range(num_voicings):
@@ -250,11 +265,11 @@ class HarmonizationModel(Qlearner):
                 if melody[j+1][0] == -1: # DONE WITH LOOP!
                     break
                 if j == 0: # choose starting state
-                    cur_state = self.getAction(context=melody[j], best=True)
+                    cur_state = self.getAction(context=melody[j], best=True, rand=rand)
                     state_list.append(cur_state)
 
                 # choose an action (i.e., the next state)
-                chosen_action = self.getAction(state=cur_state, context=melody[j+1], best=True)
+                chosen_action = self.getAction(state=cur_state, context=melody[j+1], best=True, rand=rand)
                 
                 next_state = chosen_action
                 state_list.append(next_state)
@@ -279,6 +294,7 @@ class HarmonizationModel(Qlearner):
             print("Num voice crossings:", num_voice_crossings, "\nNum parallels:", num_parallels, "\nNum illegal leaps:", num_illegal_leaps, "\nNum direct fifths/octaves", num_direct)
             # EVALUATE STATE LIST
 
+        # saves the melody as a MIDI # 
         fname = get_free_filename('melody', '.mid', directory=self.results_dir)
         melody_to_MIDI(melody, note_length=1, save=True, path=fname)
 
@@ -288,25 +304,16 @@ class HarmonizationModel(Qlearner):
         return all_voicings, all_rewards    
 
 class FreeModel(Qlearner): # uses default getLegalActions
-    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2):
-        super().__init__(alpha, gamma, epsilon)
-        self.results_dir = './results/free_results/'
+    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2, checkpoint=500, resultsdir='./results/free_results/'):
+        super().__init__(alpha, gamma, epsilon, checkpoint)
+        self.results_dir = resultsdir
+        self.rewardFunction = harmonic_prog_reward_major
 
-    def calculateRewards(self, state, next_state):
-        # for this model, don't care about harmonic progression rewards
-        # i is starting state, j is next state
-        cur_start = self.state_indices[state]
-        cur_end = self.state_indices[next_state]
-        # negative reward for voice crossing
-        vl_reward, vc,p58,il,d58 =  voice_leading_reward_function(cur_start, cur_end)
-        harm_prog_reward = harmonic_prog_reward_major(cur_start, cur_end)
-        return vl_reward + harm_prog_reward, vc,p58,il,d58
-    
-    def trainAgent(self, length=8, num_epochs=5000):
-        epoch_rewards = []
+    def trainAgent(self, length=8, num_epochs=5000, epoch_rewards=[]):
         for i in range(num_epochs):
-            if i%500 == 0:
-                print("epoch:", i)
+            if i%self.checkpoint == 0:
+                print("epoch:", i, epoch_reward)
+                self.saveModel('./models/freemodel_' + datetime.today().strftime("%m_%d") + '_' + i + '.p', i, epoch_rewards)
             epoch_reward=0
             for j in range(length):
                 if j == 0:
@@ -323,7 +330,7 @@ class FreeModel(Qlearner): # uses default getLegalActions
             epoch_rewards.append(epoch_reward)
         return epoch_rewards
     
-    def evalAgent(self, num_generations=3, length=4, fname=None, synth=False):
+    def evalAgent(self, num_generations=3, length=4, fname=None, synth=False, rand=False): # set rand=True to compare to random baseline 
         all_generations = []
         all_rewards = []
         print(num_generations)
@@ -337,11 +344,11 @@ class FreeModel(Qlearner): # uses default getLegalActions
             num_direct = 0
             for i in range(length-1):
                 if i == 0: # choose starting state
-                    cur_state = self.getAction()
+                    cur_state = self.getAction(rand=rand)
                     state_list.append(cur_state)
 
                 # choose an action (i.e., the next state)
-                chosen_action = self.getAction(state=cur_state, best=True)
+                chosen_action = self.getAction(state=cur_state, best=True, rand=rand)
                 
                 next_state = chosen_action
                 state_list.append(next_state)
