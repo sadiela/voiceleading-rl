@@ -38,10 +38,19 @@ notes_in_chords = {
     5: [7,11,2], # G
     6: [9,0,4], # a
     7: [11,2,5], # b
-    8: [2,5,9,0], # 2 7th
-    9: [5,9,0,4], # 4 7th 
-    10: [7,11,2,5], # 5 7th 
-    11: [11,2,5,9] # 7 7th
+    8: [2,5,9,0], # 2 d7 
+    9: [5,9,0,4], # 4 F7 
+    10: [7,11,2,5], # 5 G7 
+    11: [11,2,5,9], # 7 b7
+    12: [9,1,4], # A
+    13: [11,3,6], # B
+    14: [2,6,9], # D
+    15: [4,8,11], #E
+    16: [9,1,4,8], # A7
+    17: [11,3,6,10], # B7
+    18: [0,4,7,11], # C7
+    19: [2,6,9,1], # D7
+    20: [4,8,11,3], #E7
 }
 
 chord_number_to_string_major = {
@@ -52,10 +61,20 @@ chord_number_to_string_major = {
     5: "V", 
     6: "vi",
     7: "vii(dim)",
-    8: "ii",
-    9: "IV",
-    10: "V", 
-    11: "vii(dim)"
+    8: "ii7",
+    9: "IV7",
+    10: "V7", 
+    11: "vii(dim)7",
+    ###########
+    12: "V/ii", # A major
+    13: "V/iii", # B major, skip V/IV b/c it's just the tonic Cmaj
+    14: "V/V", # D major
+    15: "V/vi", # E major
+    16: "V7/ii", # A major
+    17: "V7/iii", # B major, skip V/IV b/c it's just the tonic Cmaj
+    18: "V7/IV",
+    19: "V7/V", # D major
+    20: "V7/vi" # E major
 }
 
 inversion_numbers_triad = {
@@ -72,7 +91,7 @@ inversion_numbers_seventh = {
 }
 
 # lists of possible roots, thirds, and fifths for each 
-# triad in C major
+# triad in C major + secondary function
 pitches_in_triads_major = {
     1: [notesets[0], notesets[4], notesets[7]], # CEG
     2: [notesets[2], notesets[5], notesets[9]], # DFA
@@ -81,6 +100,10 @@ pitches_in_triads_major = {
     5: [notesets[7], notesets[11], notesets[2]], # GBD
     6: [notesets[9], notesets[0], notesets[4]], # ACE
     7: [notesets[11], notesets[2], notesets[5]], # BDF
+    #8: [],
+    #9: [],
+    #10: [],
+    #11: []
 }
 
 pitches_in_sevenths_major = {

@@ -67,7 +67,7 @@ class Qlearner():
         # i is starting state, j is next state
         cur_start = self.state_indices[state]
         cur_end = self.state_indices[next_state]
-        return self.rewardFunction(state, next_state)
+        return self.rewardFunction(cur_start, cur_end)
 
     '''def getPolicy(self, state):
         action, val = self.computeActionValuesFromQValues(state)
@@ -134,7 +134,7 @@ class VoicingModel(Qlearner):
         for i in range(1,num_epochs):
             if i%self.checkpoint == 0:
                 print("epoch:", i, epoch_reward)
-                self.saveModel('./models/voicingmodel_' + datetime.today().strftime("%m_%d") + '_' + i + '.p', i, epoch_rewards)
+                self.saveModel('./models/voicingmodel_' + datetime.today().strftime("%m_%d") + '_' + str(i) + '.p', i, epoch_rewards)
             epoch_reward = 0
             for chord_prog in chord_progressions:
                 for j, c in enumerate(chord_prog):
@@ -212,7 +212,7 @@ class HarmonizationModel(Qlearner):
     def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2, checkpoint=500, resultsdir='./results/harmonization_results/', ):
         super().__init__(alpha, gamma, epsilon, checkpoint)
         self.results_dir = resultsdir
-        self.rewardFunction = harmonic_prog_reward_major # specify reward function in constructor
+        self.rewardFunction = harmonization_reward_function # specify reward function in constructor
 
     def getLegalActions(self,context=None):
         if context==None:
@@ -228,7 +228,7 @@ class HarmonizationModel(Qlearner):
         for i in tqdm(range(1,num_epochs)):
             if i%self.checkpoint == 0:
                 print("epoch:", i, epoch_reward)
-                self.saveModel('./models/harmmodel_' + datetime.today().strftime("%m_%d") + '_' + i + '.p', i, epoch_rewards)
+                self.saveModel('./models/harmmodel_' + datetime.today().strftime("%m_%d") + '_' + str(i) + '.p', i, epoch_rewards)
             epoch_reward = 0
             for melody in melodies:
                 for j, c in enumerate(melody):
@@ -313,7 +313,7 @@ class FreeModel(Qlearner): # uses default getLegalActions
         for i in range(num_epochs):
             if i%self.checkpoint == 0:
                 print("epoch:", i, epoch_reward)
-                self.saveModel('./models/freemodel_' + datetime.today().strftime("%m_%d") + '_' + i + '.p', i, epoch_rewards)
+                self.saveModel('./models/freemodel_' + datetime.today().strftime("%m_%d") + '_' + str(i) + '.p', i, epoch_rewards)
             epoch_reward=0
             for j in range(length):
                 if j == 0:

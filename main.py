@@ -64,7 +64,7 @@ def freeTraining(n_epochs):
     free_epoch_rewards = free_agent.trainAgent(num_epochs=n_epochs-completed_epochs, epoch_rewards=rewards)
     free_agent.saveModel('./models/freemodel'+DATESTR+'.p',n_epochs,free_epoch_rewards)
 
-    plotRewards(free_epoch_rewards, 'FREE', './results/free_results/training_reward_' + DATESTR +'.png')
+    plotRewards(free_epoch_rewards, 'FREE', './results/free_results/training_reward_' + DATESTR + '.png')
 
     free_progs, free_rewards = free_agent.evalAgent(num_generations=10, fname="free_trial"+ DATESTR, synth=True)
     rand_voicings, rand_rewards = free_agent.evalAgent(num_generations=10, fname="baseline_free" + DATESTR, synth=True, rand=True)

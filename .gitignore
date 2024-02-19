@@ -6,3 +6,4 @@
 */test_results/
 /data/
 *.npy
+*.p
