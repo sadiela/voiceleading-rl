@@ -5,7 +5,6 @@ import random
 from tqdm import tqdm
 from MIDI_conversion import *
 from voice_leading_rules import *
-from harmonic_progression_rules import *
 import pickle
 from datetime import datetime
 import glob
@@ -131,6 +130,7 @@ class VoicingModel(Qlearner):
         return self.chord_dict[context]
                 
     def trainAgent(self, chord_progressions, num_epochs=1000, epoch_rewards=[]):
+        epoch_reward=0
         for i in range(1,num_epochs):
             if i%self.checkpoint == 0:
                 print("epoch:", i, epoch_reward)
@@ -225,9 +225,10 @@ class HarmonizationModel(Qlearner):
         return legal_chords
 
     def trainAgent(self, melodies, num_epochs=1000, epoch_rewards=[]):
+        epoch_reward=0
         for i in tqdm(range(1,num_epochs)):
             if i%self.checkpoint == 0:
-                print("epoch:", i, epoch_rewards)
+                print("epoch:", i, epoch_reward)
                 self.saveModel('./models/harmmodel_' + datetime.today().strftime("%m_%d") + '_' + str(i) + '.p', i, epoch_rewards)
             epoch_reward = 0
             for melody in melodies:
@@ -307,9 +308,10 @@ class FreeModel(Qlearner): # uses default getLegalActions
     def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2, checkpoint=500, resultsdir='./results/free_results/'):
         super().__init__(alpha, gamma, epsilon, checkpoint)
         self.results_dir = resultsdir
-        self.rewardFunction = harmonic_prog_reward_major
+        self.rewardFunction = harmonization_reward_function
 
-    def trainAgent(self, length=8, num_epochs=5000, epoch_rewards=[]):
+    def trainAgent(self, length=16, num_epochs=5000, epoch_rewards=[]):
+        epoch_reward=0
         for i in range(num_epochs):
             if i%self.checkpoint == 0:
                 print("epoch:", i, epoch_reward)

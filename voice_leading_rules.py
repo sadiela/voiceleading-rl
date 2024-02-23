@@ -1,4 +1,3 @@
-
 from state_space_def import * 
 from pretty_midi import note_name_to_number
 
@@ -162,7 +161,6 @@ def seventh_resolve(state,next_state):
                     return 1 # did not resolve down by step
     return 0
 
-
 ### FULL REWARD FUNCTION ###
 def voice_leading_reward_function(state, next_state): 
     vc = voice_crossing(state, next_state)
@@ -175,8 +173,6 @@ def voice_leading_reward_function(state, next_state):
 
     lt_res = leading_tone_resolution(state, next_state)
 
-    #doubled_lt = doubled_leading_tone(next_state)
-
     sev_app = seventh_approach(state, next_state)
     sev_res = seventh_resolve(state,next_state)
 
@@ -184,15 +180,11 @@ def voice_leading_reward_function(state, next_state):
     next_state_chord = determine_chord_from_voicing(next_state)
     next_state_inv = determine_inversion(next_state, next_state_chord)
 
-    # FOR THESE, TRUE == ILLEGAL! BAD! DOES BREAK A RULE!
-
-
     bad_ct = illegal_common_tones(state, next_state)
 
+    #doubled_lt = doubled_leading_tone(next_state)
     #inv_triad_complete = check_inv_triad_complete(next_state)
-
     #dim_triad_first_inv = dim_triad_first_inversion(next_state)
-
     #ts_inv_doubling = second_inversion_triad_doubling(next_state)
 
 
@@ -250,8 +242,6 @@ def harmonic_prog_reward_minor(state, next_state):
         return -1
     return 0
 
-
-
 def note_names_to_numbers(namelist):
     numbers = []
     for name in namelist:
@@ -263,8 +253,6 @@ def harmonization_reward_function(cur_start, cur_end): # for major
     vl_reward, vc,p58,il,d58 =  voice_leading_reward_function(cur_start, cur_end)
     harm_prog_reward = harmonic_prog_reward_major(cur_start, cur_end)
     return vl_reward + harm_prog_reward, vc,p58,il,d58
-
-
 
 if __name__ == "__main__":
     print("Voice leading rules unit tests:") # E2 to G5

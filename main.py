@@ -11,7 +11,7 @@ import yaml
 from datetime import datetime
 
 DATESTR = datetime.today().strftime("%m_%d")
-CHECKPOINT = 100
+CHECKPOINT = 500
 
 
 def plotRewards(data, type, savepath):
@@ -66,20 +66,20 @@ def freeTraining(n_epochs):
 
     plotRewards(free_epoch_rewards, 'FREE', './results/free_results/training_reward_' + DATESTR + '.png')
 
-    free_progs, free_rewards = free_agent.evalAgent(num_generations=10, fname="free_trial"+ DATESTR, synth=True)
-    rand_voicings, rand_rewards = free_agent.evalAgent(num_generations=10, fname="baseline_free" + DATESTR, synth=True, rand=True)
+    free_progs, free_rewards = free_agent.evalAgent(num_generations=10, length=12, fname="free_trial"+ DATESTR, synth=True)
+    rand_voicings, rand_rewards = free_agent.evalAgent(num_generations=10, length=12, fname="baseline_free" + DATESTR, synth=True, rand=True)
 
 if __name__ == "__main__":
     ###########################
     ### HARMONIZATION MODEL ###
     ###########################
-    n_epochs = 1000
+    n_epochs = 8000
 
-    print("Start harmonization training loop")
-    harmonizationTraining(n_epochs)
+    #print("Start harmonization training loop")
+    #harmonizationTraining(n_epochs)
 
     print("Start voicing training loop")
     voicingTraining(n_epochs)
 
-    print("Start free training loop")
-    freeTraining(n_epochs)
+    #print("Start free training loop")
+    #freeTraining(n_epochs)
