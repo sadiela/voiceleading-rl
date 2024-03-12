@@ -7,3 +7,5 @@
 /data/
 *.npy
 *.p
+*.pyc 
+*.wav

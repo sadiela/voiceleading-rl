@@ -332,7 +332,7 @@ class FreeModel(Qlearner): # uses default getLegalActions
             epoch_rewards.append(epoch_reward)
         return epoch_rewards
     
-    def evalAgent(self, num_generations=3, length=4, fname=None, synth=False, rand=False): # set rand=True to compare to random baseline 
+    def evalAgent(self, num_generations=3, length=10, fname=None, synth=False, rand=False): # set rand=True to compare to random baseline 
         all_generations = []
         all_rewards = []
         print(num_generations)
