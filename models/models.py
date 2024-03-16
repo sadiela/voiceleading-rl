@@ -258,10 +258,6 @@ class HarmonizationModel(Qlearner):
         for i in range(num_voicings):
             state_list = []
             total_reward = 0
-            num_voice_crossings = 0
-            num_parallels = 0
-            num_illegal_leaps = 0
-            num_direct = 0
             for j, c in enumerate(melody): # MELODY NEEDS TO BE LIST OF LISTS!
                 if melody[j+1][0] == -1: # DONE WITH LOOP!
                     break
@@ -302,7 +298,57 @@ class HarmonizationModel(Qlearner):
         if synth:
             midis_to_wavs(self.results_dir)
 
-        return all_voicings, all_rewards    
+        return all_voicings, all_rewards   
+
+    def fullEvalAgent(self, melodies, fname=None, synth=False, rand=False): # set rand=True to compare to random baseline 
+        all_voicings = []
+        all_rewards = []
+        all_vc = []
+        all_parallels = []
+        all_illegal_leaps = []
+        all_direct = []
+        for melody in melodies:
+            state_list = []
+            total_reward = 0
+            num_voice_crossings = 0
+            num_parallels = 0
+            num_illegal_leaps = 0
+            num_direct = 0
+            for j, c in enumerate(melody): # MELODY NEEDS TO BE LIST OF LISTS!
+                if melody[j+1][0] == -1: # DONE WITH LOOP!
+                    break
+                if j == 0: # choose starting state
+                    cur_state = self.getAction(context=melody[j], best=True, rand=rand)
+                    state_list.append(cur_state)
+
+                # choose an action (i.e., the next state)
+                chosen_action = self.getAction(state=cur_state, context=melody[j+1], best=True, rand=rand)
+                
+                next_state = chosen_action
+                state_list.append(next_state)
+
+                reward, vc,p58,il,d58 = self.calculateRewards(cur_state, chosen_action)
+                num_voice_crossings += vc
+                num_parallels += p58
+                num_illegal_leaps += il  
+                num_direct += d58
+                
+                total_reward += reward
+                cur_state=next_state
+            
+            all_rewards.append(total_reward)
+            all_vc.append(num_voice_crossings)
+            all_parallels.append(num_parallels)
+            all_illegal_leaps.append(num_illegal_leaps)
+            all_direct.append(num_direct)
+
+            #state_seq_with_melody_to_MIDI(melody, state_list, self.state_indices, self.results_dir, desired_fstub=fname)
+
+
+        #if synth:
+        #    midis_to_wavs(self.results_dir)
+
+        return all_rewards, all_vc, all_parallels, all_illegal_leaps, all_direct   
 
 class FreeModel(Qlearner): # uses default getLegalActions
     def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2, checkpoint=500, resultsdir='./results/free_results/'):

@@ -22,13 +22,27 @@ def plotRewards(data, type, savepath):
     plt.savefig(savepath,bbox_inches="tight")
     plt.clf() 
 
+def harmonizationEval():
+    with open('./data/jsb_major_melodies.yaml', 'r') as file:
+            all_melodies = yaml.safe_load(file)
+    test_melodies = all_melodies['test']
+
+    harmonization_agent = HarmonizationModel() # don't care about training hyperparameters
+    _, _ = harmonization_agent.prepModel('./models/harmmodel_*.p') # load in most recent model
+
+    print("EVAL!", len(test_melodies))
+    all_rewards, all_vc, all_parallels, all_illegal_leaps, all_direct = harmonization_agent.fullEvalAgent(test_melodies, fname="full_random_harmonization" + DATESTR, synth=True, rand=True)
+
+    print(sum(all_rewards), sum(all_vc), sum(all_parallels), sum(all_illegal_leaps), sum(all_direct))
+
+
 def harmonizationTraining(n_epochs):
     with open('./data/jsb_major_melodies.yaml', 'r') as file:
             all_melodies = yaml.safe_load(file)
     train_melodies = all_melodies['train'] #[[[76,74],[74],[72],[74],[76,76],[76],[76],[-1]]]
     test_melodies = all_melodies['test']
 
-    harmonization_agent = HarmonizationModel(gamma=0.95, alpha=0.1, checkpoint=CHECKPOINT)
+    harmonization_agent = HarmonizationModel(gamma=0.95, alpha=0.1, checkpoint=CHECKPOINT) # defile model
     rewards, completed_epochs = harmonization_agent.prepModel('./models/harmmodel_*.p')
 
     # handle out-of-range melodies!
@@ -79,6 +93,10 @@ if __name__ == "__main__":
     ### HARMONIZATION MODEL ###
     ###########################
     n_epochs = 100000
+
+    harmonizationEval()
+
+    sys.exit(0)
 
     #print("Start harmonization training loop")
     #harmonizationTraining(n_epochs)
