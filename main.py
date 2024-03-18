@@ -22,6 +22,16 @@ def plotRewards(data, type, savepath):
     plt.savefig(savepath,bbox_inches="tight")
     plt.clf() 
 
+def bachEval():
+    with open('./data/jsb_major_orig_oicings.yaml', 'r') as file:
+        voicings = yaml.safe_load(file)
+    test_voicings = voicings['test']
+
+    for voicing in test_voicings:
+        for i in range(len(voicing)-1):
+            print(voicing[i], voicing[i+1])
+         
+
 def harmonizationEval():
     with open('./data/jsb_major_melodies.yaml', 'r') as file:
             all_melodies = yaml.safe_load(file)
