@@ -30,9 +30,13 @@ def harmonizationEval():
     harmonization_agent = HarmonizationModel() # don't care about training hyperparameters
     _, _ = harmonization_agent.prepModel('./models/harmmodel_*.p') # load in most recent model
 
+    # FOR RANDOM!
     print("EVAL!", len(test_melodies))
-    all_rewards, all_vc, all_parallels, all_illegal_leaps, all_direct = harmonization_agent.fullEvalAgent(test_melodies, fname="full_random_harmonization" + DATESTR, synth=True, rand=True)
+    all_rewards, all_vc, all_parallels, all_illegal_leaps, all_direct, all_harmonizations = harmonization_agent.fullEvalAgent(test_melodies, fname="full_random_harmonization" + DATESTR, synth=True, rand=True)
 
+    # SAVE HARMONIZATIONS!
+    with open('./results/for_table/random_harmonizatons.yaml', 'w') as outfile:
+        yaml.dump(all_harmonizations, outfile, default_flow_style=False)
     print(sum(all_rewards), sum(all_vc), sum(all_parallels), sum(all_illegal_leaps), sum(all_direct))
 
 

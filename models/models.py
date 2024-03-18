@@ -301,7 +301,7 @@ class HarmonizationModel(Qlearner):
         return all_voicings, all_rewards   
 
     def fullEvalAgent(self, melodies, fname=None, synth=False, rand=False): # set rand=True to compare to random baseline 
-        all_voicings = []
+        all_harms = []
         all_rewards = []
         all_vc = []
         all_parallels = []
@@ -336,6 +336,8 @@ class HarmonizationModel(Qlearner):
                 total_reward += reward
                 cur_state=next_state
             
+            all_harms.append(state_list)
+            
             all_rewards.append(total_reward)
             all_vc.append(num_voice_crossings)
             all_parallels.append(num_parallels)
@@ -348,7 +350,7 @@ class HarmonizationModel(Qlearner):
         #if synth:
         #    midis_to_wavs(self.results_dir)
 
-        return all_rewards, all_vc, all_parallels, all_illegal_leaps, all_direct   
+        return all_rewards, all_vc, all_parallels, all_illegal_leaps, all_direct, all_harms   
 
 class FreeModel(Qlearner): # uses default getLegalActions
     def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2, checkpoint=500, resultsdir='./results/free_results/'):
