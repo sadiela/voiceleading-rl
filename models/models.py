@@ -269,7 +269,6 @@ class VoicingModel(Qlearner):
         return sum(all_vl_rewards), sum(all_vc), sum(all_parallels), sum(all_illegal_leaps), sum(all_direct), sum(all_lt), sum(all_ct), sum(all_sev), all_voicings   
 
 
-
 class HarmonizationModel(Qlearner):
     def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2, checkpoint=500, resultsdir='./results/harmonization_results/', ):
         super().__init__(alpha, gamma, epsilon, checkpoint)
@@ -505,6 +504,66 @@ class FreeModel(Qlearner): # uses default getLegalActions
             midis_to_wavs(self.results_dir)
 
         return all_generations, all_rewards
+    
+    def fullEvalAgent(self, voicings, fname=None, synth=False, rand=False): # set rand=True to compare to random baseline 
+        all_comps = []
+        all_vl_rewards = []
+        all_hp_rewards = []
+        all_vc = []
+        all_parallels = []
+        all_illegal_leaps = []
+        all_direct = []
+        all_lt = [] 
+        all_ct = [] 
+        all_sev = [] 
+        for v in voicings:
+            state_list = []
+            cur_vl_reward = 0
+            cur_hp_reward = 0
+            num_voice_crossings = 0
+            num_parallels = 0
+            num_illegal_leaps = 0
+            num_direct = 0
+            num_lt = 0
+            num_ct = 0 
+            num_sev = 0
+            for i in range(len(v)):
+                if i == 0: # choose starting state
+                    cur_state = self.getAction(rand=rand)
+                    state_list.append(cur_state)
+
+                # choose an action (i.e., the next state)
+                chosen_action = self.getAction(state=cur_state, best=True, rand=rand)
+                
+                next_state = chosen_action
+                state_list.append(next_state)
+
+                vl_reward, hp_reward, vc, p58, il, d58, lt, ct, sev = self.calculateRewards(cur_state, next_state)
+                cur_vl_reward += vl_reward
+                cur_hp_reward += hp_reward
+                num_voice_crossings += vc
+                num_parallels += p58
+                num_illegal_leaps += il  
+                num_direct += d58
+                num_lt += lt 
+                num_ct += ct 
+                num_sev += sev
+                cur_state=next_state
+            
+            all_comps.append(state_list)
+            
+            all_vl_rewards.append(cur_vl_reward)
+            all_hp_rewards.append(cur_hp_reward)
+            all_vc.append(num_voice_crossings)
+            all_parallels.append(num_parallels)
+            all_illegal_leaps.append(num_illegal_leaps)
+            all_direct.append(num_direct)
+            all_lt.append(num_lt)
+            all_ct.append(num_ct)
+            all_sev.append(num_sev)
+
+        return sum(all_vl_rewards), sum(all_hp_rewards), sum(all_vc), sum(all_parallels), sum(all_illegal_leaps), sum(all_direct), sum(all_lt), sum(all_ct), sum(all_sev), all_comps   
+
 
 
         
