@@ -9,6 +9,7 @@ import glob
 #from models.voicing_model import *
 import yaml
 from datetime import datetime
+from tqdm import tqdm
 
 DATESTR = datetime.today().strftime("%m_%d")
 CHECKPOINT = 500
@@ -23,14 +24,38 @@ def plotRewards(data, type, savepath):
     plt.clf() 
 
 def bachEval():
-    with open('./data/jsb_major_orig_oicings.yaml', 'r') as file:
+    with open('./data/jsb_major_orig_voicings.yaml', 'r') as file:
         voicings = yaml.safe_load(file)
     test_voicings = voicings['test']
 
-    for voicing in test_voicings:
+    vc_total = 0
+    p58_total = 0
+    il_total = 0
+    d58_total = 0
+    lt_total = 0
+    ct_total = 0 
+    sev_total = 0
+    vl_reward_total = 0 
+    hp_reward_total = 0
+
+    for voicing in tqdm(test_voicings):
         for i in range(len(voicing)-1):
-            print(voicing[i], voicing[i+1])
-         
+            vl_reward, harm_prog_reward, vc,p58,il,d58,lt,ct,sev = harmonization_reward_function(voicing[i], voicing[i+1])
+            vl_reward_total += vl_reward
+            hp_reward_total += harm_prog_reward 
+            vc_total += vc 
+            p58_total += p58 
+            il_total += il
+            d58_total += d58
+            lt_total += lt 
+            ct_total += ct 
+            sev_total += sev
+
+    print("ORIG BACH")
+    print("VL reward:", vl_reward_total, "\nHP reward:", hp_reward_total)
+    print("VCs:", vc_total, "\nP58s:", p58_total, "\nILs:", il_total, "\nD58s:", d58_total)
+    print("LTs:", lt_total, "\nCTs:", ct_total, "\nSevs:", sev_total)
+    return vl_reward_total, hp_reward_total, vc_total, p58_total, il_total, d58_total
 
 def harmonizationEval():
     with open('./data/jsb_major_melodies.yaml', 'r') as file:
@@ -41,14 +66,57 @@ def harmonizationEval():
     _, _ = harmonization_agent.prepModel('./models/harmmodel_*.p') # load in most recent model
 
     # FOR RANDOM!
-    print("EVAL!", len(test_melodies))
-    all_rewards, all_vc, all_parallels, all_illegal_leaps, all_direct, all_harmonizations = harmonization_agent.fullEvalAgent(test_melodies, fname="full_random_harmonization" + DATESTR, synth=True, rand=True)
+    print("RAND HARMONIZATION EVAL!", len(test_melodies))
+    vl_rewards, hp_rewards, all_vc, all_parallels, all_illegal_leaps, all_direct, all_lt, all_ct, all_sev, all_harmonizations = harmonization_agent.fullEvalAgent(test_melodies, fname="full_random_harmonization" + DATESTR, synth=True, rand=True)
 
     # SAVE HARMONIZATIONS!
     with open('./results/for_table/random_harmonizatons.yaml', 'w') as outfile:
         yaml.dump(all_harmonizations, outfile, default_flow_style=False)
-    print(sum(all_rewards), sum(all_vc), sum(all_parallels), sum(all_illegal_leaps), sum(all_direct))
+    #print(sum(vl_rewards), sum(all_vc), sum(all_parallels), sum(all_illegal_leaps), sum(all_direct))
 
+    print("VL reward:", vl_rewards, "\nHP reward:", hp_rewards)
+    print("VCs:", all_vc, "\nP58s:", all_parallels, "\nILs:", all_illegal_leaps, "\nD58s:", all_direct)
+    print("LTs:", all_lt, "\nCTs:", all_ct, "\nSevs:", all_sev)
+
+    print("MODEL HARMONIZATION EVAL!", len(test_melodies))
+    vl_rewards, hp_rewards, all_vc, all_parallels, all_illegal_leaps, all_direct, all_lt, all_ct, all_sev, all_harmonizations = harmonization_agent.fullEvalAgent(test_melodies, fname="full_harmonization" + DATESTR, synth=True, rand=False)
+
+    # SAVE HARMONIZATIONS!
+    with open('./results/for_table/model_harmonizatons.yaml', 'w') as outfile:
+        yaml.dump(all_harmonizations, outfile, default_flow_style=False)
+    #print(sum(vl_rewards), sum(all_vc), sum(all_parallels), sum(all_illegal_leaps), sum(all_direct))
+
+    print("VL reward:", vl_rewards, "\nHP reward:", hp_rewards)
+    print("VCs:", all_vc, "\nP58s:", all_parallels, "\nILs:", all_illegal_leaps, "\nD58s:", all_direct)
+    print("LTs:", all_lt, "\nCTs:", all_ct, "\nSevs:", all_sev)
+
+def voicingEval():
+    with open('./data/jsb_major_chord_progs.yaml', 'r') as file:
+            all_progs = yaml.safe_load(file)
+    test_progs = all_progs['test']
+
+    voicing_agent = VoicingModel()
+    _,_ = voicing_agent.prepModel('./models/voicingmodel_*.p')
+
+    print("RAND VOICING EVAL!", len(test_progs))
+    vl_rewards, all_vc, all_parallels, all_illegal_leaps, all_direct, all_lt, all_ct, all_sev, all_voicings = voicing_agent.fullEvalAgent(test_progs, fname="full_random_voicing"+DATESTR, synth=True, rand=True)
+
+    with open('./results/for_table/random_voicings.yaml', 'w') as outfile:
+        yaml.dump(all_voicings, outfile, default_flow_style=False)
+
+    print("VL reward:", vl_rewards)
+    print("VCs:", all_vc, "\nP58s:", all_parallels, "\nILs:", all_illegal_leaps, "\nD58s:", all_direct)
+    print("LTs:", all_lt, "\nCTs:", all_ct, "\nSevs:", all_sev)
+
+    print("MODEL VOICING EVAL!", len(test_progs))
+    vl_rewards, all_vc, all_parallels, all_illegal_leaps, all_direct, all_lt, all_ct, all_sev, all_voicings = voicing_agent.fullEvalAgent(test_progs, fname="full_voicing"+DATESTR, synth=True, rand=False)
+
+    with open('./results/for_table/model_voicings.yaml', 'w') as outfile:
+        yaml.dump(all_voicings, outfile, default_flow_style=False)
+
+    print("VL reward:", vl_rewards)
+    print("VCs:", all_vc, "\nP58s:", all_parallels, "\nILs:", all_illegal_leaps, "\nD58s:", all_direct)
+    print("LTs:", all_lt, "\nCTs:", all_ct, "\nSevs:", all_sev)
 
 def harmonizationTraining(n_epochs):
     with open('./data/jsb_major_melodies.yaml', 'r') as file:
@@ -108,7 +176,9 @@ if __name__ == "__main__":
     ###########################
     n_epochs = 100000
 
+    bachEval()
     harmonizationEval()
+    voicingEval()
 
     sys.exit(0)
 

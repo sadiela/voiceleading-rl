@@ -187,8 +187,7 @@ def voice_leading_reward_function(state, next_state):
     #dim_triad_first_inv = dim_triad_first_inversion(next_state)
     #ts_inv_doubling = second_inversion_triad_doubling(next_state)
 
-
-    return -VC*vc + -PERF58*p58 + -ILL_LEAP*ill + -DIR58*d58 + -ILL_LT_RES*lt_res+ -ILL_CT*bad_ct +  -ILL_7_RES*sev_res+ -ILL_7_APP*sev_app, vc, p58, ill, d58
+    return -VC*vc + -PERF58*p58 + -ILL_LEAP*ill + -DIR58*d58 + -ILL_LT_RES*lt_res+ -ILL_CT*bad_ct +  -ILL_7_RES*sev_res+ -ILL_7_APP*sev_app, vc, p58, ill, d58, lt_res, bad_ct, sev_res+sev_app
     #  -.1*doubled_lt + -.05*triad_first_inv -.05*ts_inv_doubling + -.05*dim_t_inv +  -.2*inv_triad_complete +
 
 
@@ -250,9 +249,9 @@ def note_names_to_numbers(namelist):
 
 #### MODEL REWARD FUNCTIONS ####
 def harmonization_reward_function(cur_start, cur_end): # for major 
-    vl_reward, vc,p58,il,d58 =  voice_leading_reward_function(cur_start, cur_end)
+    vl_reward, vc, p58, il, d58, lt, ct, sev =  voice_leading_reward_function(cur_start, cur_end)
     harm_prog_reward = harmonic_prog_reward_major(cur_start, cur_end)
-    return vl_reward + harm_prog_reward, vc,p58,il,d58
+    return vl_reward, harm_prog_reward, vc, p58, il, d58, lt, ct, sev
 
 if __name__ == "__main__":
     print("Voice leading rules unit tests:") # E2 to G5
