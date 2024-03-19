@@ -63,8 +63,60 @@ def bachEval():
 
 
 def freeEval(num_runs=50):
+    with open('./data/jsb_major_orig_voicings.yaml', 'r') as file:
+        voicings = yaml.safe_load(file)
+    test_voicings = voicings['test']
+
     free_agent = FreeModel()
     _,_ = free_agent.prepModel('./models/freemodel_*.p')
+
+    print("RAND FREE EVAL!", len(test_voicings))
+    avg_vl, avg_hp, avg_vc, avg_p, avg_il, avg_d, avg_lt, avg_ct, avg_sev = [],[],[],[],[],[],[],[],[]
+    for _ in tqdm(range(num_runs)):
+        vl_rewards, hp_rewards, all_vc, all_parallels, all_illegal_leaps, all_direct, all_lt, all_ct, all_sev, all_harmonizations = free_agent.fullEvalAgent(test_voicings, fname="full_random_free" + DATESTR, synth=True, rand=True)
+        avg_vl.append(vl_rewards)
+        avg_hp.append(hp_rewards)
+        avg_vc.append(all_vc )
+        avg_p.append(all_parallels)
+        avg_il.append(all_illegal_leaps)
+        avg_d.append(all_direct)
+        avg_lt.append(all_lt )
+        avg_ct.append(all_ct)
+        avg_sev.append(all_sev)
+
+    # SAVE HARMONIZATIONS! (for last iteration I guess)
+    with open('./results/for_table/random_free.yaml', 'w') as outfile:
+        yaml.dump(all_harmonizations, outfile, default_flow_style=False)
+    #print(sum(vl_rewards), sum(all_vc), sum(all_parallels), sum(all_illegal_leaps), sum(all_direct))
+        
+    print("VL reward:", statistics.mean(avg_vl), statistics.stdev(avg_vl), "\nHP reward:", statistics.mean(avg_hp), statistics.stdev(avg_hp),)
+    print("VCs:", statistics.mean(avg_vc), statistics.stdev(avg_vc), "\nP58s:", statistics.mean(avg_p), statistics.stdev(avg_p) , "\nILs:", statistics.mean(avg_il), statistics.stdev(avg_il) , "\nD58s:", statistics.mean(avg_d), statistics.stdev(avg_d))
+    print("LTs:", statistics.mean(avg_lt), statistics.stdev(avg_lt) , "\nCTs:", statistics.mean(avg_ct), statistics.stdev(avg_ct) , "\nSevs:", statistics.mean(avg_sev), statistics.stdev(avg_sev) )
+
+
+    print("MODEL FREE EVAL!", len(test_voicings))
+    avg_vl, avg_hp, avg_vc, avg_p, avg_il, avg_d, avg_lt, avg_ct, avg_sev = [],[],[],[],[],[],[],[],[]
+    for _ in tqdm(range(num_runs)):
+        vl_rewards, hp_rewards, all_vc, all_parallels, all_illegal_leaps, all_direct, all_lt, all_ct, all_sev, all_harmonizations = free_agent.fullEvalAgent(test_voicings, fname="full_random_free" + DATESTR, synth=True, rand=False)
+        avg_vl.append(vl_rewards)
+        avg_hp.append(hp_rewards)
+        avg_vc.append(all_vc )
+        avg_p.append(all_parallels)
+        avg_il.append(all_illegal_leaps)
+        avg_d.append(all_direct)
+        avg_lt.append(all_lt )
+        avg_ct.append(all_ct)
+        avg_sev.append(all_sev)
+
+    # SAVE HARMONIZATIONS! (for last iteration I guess)
+    with open('./results/for_table/model_free.yaml', 'w') as outfile:
+        yaml.dump(all_harmonizations, outfile, default_flow_style=False)
+    #print(sum(vl_rewards), sum(all_vc), sum(all_parallels), sum(all_illegal_leaps), sum(all_direct))
+        
+    print("VL reward:", statistics.mean(avg_vl), statistics.stdev(avg_vl), "\nHP reward:", statistics.mean(avg_hp), statistics.stdev(avg_hp),)
+    print("VCs:", statistics.mean(avg_vc), statistics.stdev(avg_vc), "\nP58s:", statistics.mean(avg_p), statistics.stdev(avg_p) , "\nILs:", statistics.mean(avg_il), statistics.stdev(avg_il) , "\nD58s:", statistics.mean(avg_d), statistics.stdev(avg_d))
+    print("LTs:", statistics.mean(avg_lt), statistics.stdev(avg_lt) , "\nCTs:", statistics.mean(avg_ct), statistics.stdev(avg_ct) , "\nSevs:", statistics.mean(avg_sev), statistics.stdev(avg_sev) )
+
 
 def harmonizationEval(num_runs=50):
     with open('./data/jsb_major_melodies.yaml', 'r') as file:
@@ -229,12 +281,7 @@ if __name__ == "__main__":
     ### HARMONIZATION MODEL ###
     ###########################
     n_epochs = 100000
-
-    #bachEval()
-    harmonizationEval()
-    voicingEval()
-
-    sys.exit(0)
+    num_runs = 50
 
     #print("Start harmonization training loop")
     #harmonizationTraining(n_epochs)
@@ -242,5 +289,11 @@ if __name__ == "__main__":
     #print("Start voicing training loop")
     #voicingTraining(n_epochs, train=False)
 
-    print("Start free training loop")
-    freeTraining(n_epochs)
+    #print("Start free training loop")
+    #freeTraining(n_epochs)
+
+    #bachEval()
+    #harmonizationEval()
+    #voicingEval()
+    freeEval(num_runs)
+
