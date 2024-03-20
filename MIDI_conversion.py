@@ -58,9 +58,22 @@ def one_part_note_list(part, note_dur = 1):
     for i, note in enumerate(part):
         if i == 0:
             cur_note = note
+        if i == len(part) - 1:
+            if note != cur_note: 
+                note_obj = pretty_midi.Note(
+                    velocity=100, pitch=cur_note, start=(i-cur_length)*note_dur, end=i*note_dur)
+                notes.append(note_obj)
+                note_obj = pretty_midi.Note(
+                    velocity=100, pitch=note, start=i*note_dur, end=(i+1)*note_dur)
+                notes.append(note_obj)
+            else: 
+                note_obj = pretty_midi.Note(
+                    velocity=100, pitch=note, start=(i-cur_length)*note_dur, end=(i+1)*note_dur)
+                notes.append(note_obj)
+            break
         if note != cur_note: # end previous note 
             note_obj = pretty_midi.Note(
-                velocity=100, pitch=note, start=(i-cur_length)*note_dur, end=i*note_dur)
+                velocity=100, pitch=cur_note, start=(i-cur_length)*note_dur, end=i*note_dur)
             notes.append(note_obj)
             cur_note = note
             cur_length = 1
@@ -79,7 +92,10 @@ def state_seq_to_MIDI_better(state_seq, state_indices, dir, desired_fstub):
     bas = []
 
     for state in state_seq:
-        notes = state_indices[state]
+        if type(state) is not list: 
+            notes = state_indices[state]
+        else: 
+            notes = state
         bas.append(notes[0])
         ten.append(notes[1])
         alt.append(notes[2])
@@ -229,24 +245,53 @@ def test_different_midi_instruments(pm, res_folder):
 
     midis_to_wavs(res_folder)
 
+def gen_result_midis(state_seqs, state_indices, res_folder, fstub):
+    for seq in state_seqs: 
+        new_mid, new_pm = state_seq_to_MIDI_better(seq, state_indices, res_folder, fstub)
+        midi_to_wav(new_mid)
+
 if __name__ == "__main__":
-    
+
     with open('./dictionaries/state_dict_3.yaml', 'r') as file:
         state_indices = yaml.safe_load(file)
 
-    state_seq_path = '/Users/sadiela/Documents/phd/courses/courses_spring_2023/ec700reinforcementlearning/final_project/results/for_table/model_harmonizatons.yaml'
-    with open(state_seq_path, 'r') as file: 
-        state_seqs = yaml.safe_load(file)
+    '''with open('./data/jsb_major_orig_voicings.yaml', 'r') as file: 
+        jsb_voicings = yaml.safe_load(file)
 
-    seq = state_seqs[2]
+    test_vocs = jsb_voicings['test']
+    gen_result_midis(test_vocs, state_indices, './results/human_eval/bach/', 'jsb')'''
+    
+    with open('./results/for_table/random_voicings.yaml', 'r') as file: 
+        rand_voc_seqs = yaml.safe_load(file)
 
-    new_mid, new_pm = state_seq_to_MIDI_better(seq, state_indices, '.', 'new_func')
-    old_mid, old_pm = state_seq_to_MIDI(seq, state_indices, '.', 'orig_func')
+    with open('./results/for_table/model_voicings.yaml', 'r') as file: 
+        mod_voc_seqs = yaml.safe_load(file)
 
-    pianoroll = new_pm.instruments[0].get_piano_roll()
+    with open('./results/for_table/random_harmonizations.yaml', 'r') as file: 
+        rand_harm_seqs = yaml.safe_load(file)
+
+    with open('./results/for_table/model_harmonizations.yaml', 'r') as file: 
+        mod_harm_seqs = yaml.safe_load(file)
+
+    with open('./results/for_table/random_free.yaml', 'r') as file: 
+        rand_free_seqs = yaml.safe_load(file)
+
+    with open('./results/for_table/model_free.yaml', 'r') as file: 
+        mod_free_seqs = yaml.safe_load(file)
+
+    gen_result_midis(rand_voc_seqs, state_indices, './results/human_eval/voicing/', 'random')
+    gen_result_midis(mod_voc_seqs, state_indices, './results/human_eval/voicing/', 'mod')
+    gen_result_midis(rand_harm_seqs, state_indices, './results/human_eval/harm/', 'random')
+    gen_result_midis(mod_harm_seqs, state_indices, './results/human_eval/harm/', 'mod')
+    gen_result_midis(rand_free_seqs, state_indices, './results/human_eval/free/', 'random')
+    gen_result_midis(mod_free_seqs, state_indices, './results/human_eval/free/', 'mod')
+
+    sys.exit(0)
+
+    '''pianoroll = new_pm.instruments[0].get_piano_roll()
     _, ax = plt.subplots()
     ax  = custom_plot_pianoroll(ax, pianoroll, resolution=2)
-    plt.show()
+    plt.savefig()
 
     pianoroll = old_pm.instruments[0].get_piano_roll()
     _, ax = plt.subplots()
@@ -254,11 +299,9 @@ if __name__ == "__main__":
     plt.show()
 
     midi_to_wav(new_mid)
-    midi_to_wav(old_mid)
+    midi_to_wav(old_mid)'''
 
     # UNIT TEST: melody_to_MIDI #
-
-    sys.exit(0)
 
     pm = pretty_midi.PrettyMIDI("./results/voicing_results/voicing-1.mid")
     res_folder = "./results/midi_instr/"
