@@ -34,7 +34,7 @@ def get_free_filename(stub, suffix='', directory='./results/', date=False):
                 Path(file_candidate).mkdir()
             return file_candidate
 
-def state_seq_to_MIDI(state_seq, state_indices, dir, desired_fstub='seqmid'): 
+def state_seq_to_MIDI(state_seq, state_indices, dir, desired_fstub='seqmid', note_dur=1): 
     desired_filename = get_free_filename(desired_fstub, '.mid', directory=dir)
     # Create a PrettyMIDI object
     midi_obj = pretty_midi.PrettyMIDI() # init tempo is 120, so a quarter note is 0.5 sec
@@ -45,13 +45,13 @@ def state_seq_to_MIDI(state_seq, state_indices, dir, desired_fstub='seqmid'):
         for note in notes: 
             # Create a Note instance, starting at 0s and ending at 1s
             note_obj = pretty_midi.Note(
-                velocity=100, pitch=note, start=1*i, end=1*i+1)
+                velocity=100, pitch=note, start=note_dur*i, end=note_dur*(i+1))
             piano.notes.append(note_obj)
     midi_obj.instruments.append(piano)
     midi_obj.write(desired_filename)
     return desired_filename
 
-def one_part_note_list(part):
+def one_part_note_list(part, note_dur = 1):
     notes = []
     cur_note = -1
     cur_length = 0
@@ -60,9 +60,10 @@ def one_part_note_list(part):
             cur_note = note
         if note != cur_note: # end previous note 
             note_obj = pretty_midi.Note(
-                velocity=100, pitch=note, start=i-cur_length, end=i)
+                velocity=100, pitch=note, start=(i-cur_length)*note_dur, end=i*note_dur)
             notes.append(note_obj)
             cur_note = note
+            cur_length = 1
         else: # note is continuing
             cur_length += 1
     return notes
@@ -84,21 +85,16 @@ def state_seq_to_MIDI_better(state_seq, state_indices, dir, desired_fstub):
         alt.append(notes[2])
         sop.append(notes[3])
 
-    print("Bass notes:", bas)
-    print("Tenor notes:", ten)
-    print("Alto notes:", alt)
-    print("Soprano notes:", sop)
-
-    sop_notes, _ = one_part_note_list(sop)
-    alt_notes, _ = one_part_note_list(alt)
-    ten_notes, _ = one_part_note_list(ten)
-    bas_notes, _ = one_part_note_list(bas)
+    sop_notes = one_part_note_list(sop)
+    alt_notes = one_part_note_list(alt)
+    ten_notes = one_part_note_list(ten)
+    bas_notes = one_part_note_list(bas)
 
     piano.notes = piano.notes + sop_notes + alt_notes + ten_notes + bas_notes
 
     midi_obj.instruments.append(piano)
     midi_obj.write(desired_fname)
-    return desired_fname
+    return desired_fname, midi_obj
 
 
 def melody_to_MIDI(melody, note_length=1, save=False, path='./melody.mid'): # note length in seconds
@@ -242,14 +238,23 @@ if __name__ == "__main__":
     with open(state_seq_path, 'r') as file: 
         state_seqs = yaml.safe_load(file)
 
-    seq = state_seqs[0]
-    print(seq)
+    seq = state_seqs[2]
 
-    new_mid = state_seq_to_MIDI_better(seq, state_indices, '.', 'new_func')
-    #old_mid = state_seq_to_MIDI(seq, state_indices, '.', 'orig_func')
+    new_mid, new_pm = state_seq_to_MIDI_better(seq, state_indices, '.', 'new_func')
+    old_mid, old_pm = state_seq_to_MIDI(seq, state_indices, '.', 'orig_func')
 
-    #midi_to_wav(new_mid,old_mid[:-3] + 'wav')
-    #midi_to_wav(old_mid,old_mid[:-3] + 'wav')
+    pianoroll = new_pm.instruments[0].get_piano_roll()
+    _, ax = plt.subplots()
+    ax  = custom_plot_pianoroll(ax, pianoroll, resolution=2)
+    plt.show()
+
+    pianoroll = old_pm.instruments[0].get_piano_roll()
+    _, ax = plt.subplots()
+    ax  = custom_plot_pianoroll(ax, pianoroll, resolution=2)
+    plt.show()
+
+    midi_to_wav(new_mid)
+    midi_to_wav(old_mid)
 
     # UNIT TEST: melody_to_MIDI #
 
