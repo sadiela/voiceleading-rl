@@ -42,18 +42,64 @@ def state_seq_to_MIDI(state_seq, state_indices, dir, desired_fstub='seqmid'):
     piano = pretty_midi.Instrument(program=1)
     for i, state in enumerate(state_seq): 
         notes = state_indices[state]
-        #print(notes)
         for note in notes: 
             # Create a Note instance, starting at 0s and ending at 1s
             note_obj = pretty_midi.Note(
                 velocity=100, pitch=note, start=1*i, end=1*i+1)
-            # Add it to our cello instrument
             piano.notes.append(note_obj)
-    # Add the cello instrument to the PrettyMIDI object
     midi_obj.instruments.append(piano)
-    # Write out the MIDI data
     midi_obj.write(desired_filename)
     return desired_filename
+
+def one_part_note_list(part):
+    notes = []
+    cur_note = -1
+    cur_length = 0
+    for i, note in enumerate(part):
+        if i == 0:
+            cur_note = note
+        if note != cur_note: # end previous note 
+            note_obj = pretty_midi.Note(
+                velocity=100, pitch=note, start=i-cur_length, end=i)
+            notes.append(note_obj)
+            cur_note = note
+        else: # note is continuing
+            cur_length += 1
+    return notes
+
+def state_seq_to_MIDI_better(state_seq, state_indices, dir, desired_fstub):
+    desired_fname = get_free_filename(desired_fstub, '.mid', directory=dir)
+    midi_obj = pretty_midi.PrettyMIDI() # init tempo is 120, so a quarter note is 0.5 sec
+    piano = pretty_midi.Instrument(program=1)
+
+    sop = []
+    alt = [] 
+    ten = [] 
+    bas = []
+
+    for state in state_seq:
+        notes = state_indices[state]
+        bas.append(notes[0])
+        ten.append(notes[1])
+        alt.append(notes[2])
+        sop.append(notes[3])
+
+    print("Bass notes:", bas)
+    print("Tenor notes:", ten)
+    print("Alto notes:", alt)
+    print("Soprano notes:", sop)
+
+    sop_notes, _ = one_part_note_list(sop)
+    alt_notes, _ = one_part_note_list(alt)
+    ten_notes, _ = one_part_note_list(ten)
+    bas_notes, _ = one_part_note_list(bas)
+
+    piano.notes = piano.notes + sop_notes + alt_notes + ten_notes + bas_notes
+
+    midi_obj.instruments.append(piano)
+    midi_obj.write(desired_fname)
+    return desired_fname
+
 
 def melody_to_MIDI(melody, note_length=1, save=False, path='./melody.mid'): # note length in seconds
     print("MELODY:", melody)
@@ -98,7 +144,9 @@ def state_seq_with_melody_to_MIDI(melody, state_seq, state_indices, directory, d
     midi_obj.instruments.append(piano)
     midi_obj.write(desired_filename)
 
-def midi_to_wav(midi_path,wav_path):
+def midi_to_wav(midi_path,wav_path=None):
+    if wav_path == None:
+        wav_path = midi_path[:-3] + 'wav'
     #print("CONVERTING")
     # using the default sound font in 44100 Hz sample rate
     fs = FluidSynth(sound_font="./GeneralUser_GS_v1.471.sf2")
@@ -186,8 +234,22 @@ def test_different_midi_instruments(pm, res_folder):
     midis_to_wavs(res_folder)
 
 if __name__ == "__main__":
+    
+    with open('./dictionaries/state_dict_3.yaml', 'r') as file:
+        state_indices = yaml.safe_load(file)
 
+    state_seq_path = '/Users/sadiela/Documents/phd/courses/courses_spring_2023/ec700reinforcementlearning/final_project/results/for_table/model_harmonizatons.yaml'
+    with open(state_seq_path, 'r') as file: 
+        state_seqs = yaml.safe_load(file)
 
+    seq = state_seqs[0]
+    print(seq)
+
+    new_mid = state_seq_to_MIDI_better(seq, state_indices, '.', 'new_func')
+    #old_mid = state_seq_to_MIDI(seq, state_indices, '.', 'orig_func')
+
+    #midi_to_wav(new_mid,old_mid[:-3] + 'wav')
+    #midi_to_wav(old_mid,old_mid[:-3] + 'wav')
 
     # UNIT TEST: melody_to_MIDI #
 

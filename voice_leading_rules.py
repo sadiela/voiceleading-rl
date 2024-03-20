@@ -115,7 +115,7 @@ def illegal_common_tones(state, next_state):
         else:
             return 0 # bass arpeggiation!
     elif num_common_tones == 4:
-        return 1
+        return 0 # this is fine....
     return 0
 
 def leading_tone_resolution(state, next_state): 

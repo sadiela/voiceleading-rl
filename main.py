@@ -1,3 +1,4 @@
+### Train and Eval code for RL model ###
 from MIDI_conversion import *
 from voice_leading_rules import *
 import matplotlib.pyplot as plt
@@ -292,8 +293,8 @@ if __name__ == "__main__":
     #print("Start free training loop")
     #freeTraining(n_epochs)
 
-    #bachEval()
+    bachEval()
     #harmonizationEval()
     #voicingEval()
-    freeEval(num_runs)
+    #freeEval(num_runs)
 
