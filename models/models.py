@@ -440,7 +440,8 @@ class FreeModel(Qlearner): # uses default getLegalActions
         self.results_dir = resultsdir
         self.rewardFunction = harmonization_reward_function
 
-    def trainAgent(self, length=16, num_epochs=5000, epoch_rewards=[]):
+    def trainAgent(self, num_epochs=5000, epoch_rewards=[], voicings=None):
+        # voicings are passed in just to provide episodes/episode lengths consistent with other model runs
         epoch_reward=0
         for i in range(len(epoch_rewards)+1,num_epochs):
             self.epsilon = (self.epsilon_init-self.epsilon_end)*((num_epochs - i)/num_epochs) + self.epsilon_end
@@ -448,19 +449,20 @@ class FreeModel(Qlearner): # uses default getLegalActions
                 print("epoch:", i, epoch_reward)
                 self.saveModel('./models/freemodel_' + datetime.today().strftime("%m_%d") + '_' + str(i) + '.p', i, epoch_rewards)
             epoch_reward=0
-            for j in range(length):
-                if j == 0:
-                    cur_state = self.getAction()
+            for v in voicings: 
+                for j in range(len(v)):
+                    if j == 0:
+                        cur_state = self.getAction()
 
-                chosen_action = self.getAction(state=cur_state)
-                next_state = chosen_action
-                
-                # vl_reward, harm_prog_reward, vc,p58,il,d58
-                vl_reward, harm_prog_reward, _,_,_,_,_,_,_ = self.calculateRewards(cur_state, chosen_action)
-                epoch_reward += vl_reward + harm_prog_reward
+                    chosen_action = self.getAction(state=cur_state)
+                    next_state = chosen_action
+                    
+                    # vl_reward, harm_prog_reward, vc,p58,il,d58
+                    vl_reward, harm_prog_reward, _,_,_,_,_,_,_ = self.calculateRewards(cur_state, chosen_action)
+                    epoch_reward += vl_reward + harm_prog_reward
 
-                self.update(cur_state, next_state, vl_reward + harm_prog_reward, context=None)
-                cur_state=next_state
+                    self.update(cur_state, next_state, vl_reward + harm_prog_reward, context=None)
+                    cur_state=next_state
             epoch_rewards.append(epoch_reward)
         return epoch_rewards
     

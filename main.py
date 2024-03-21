@@ -226,17 +226,17 @@ def voicingEval(num_runs=50):
     '''
 
 def harmonizationTraining(n_epochs):
-    with open('./data/jsb_major_melodies.yaml', 'r') as file:
+    with open('./data/jsb_maj_melodies.yaml', 'r') as file:
             all_melodies = yaml.safe_load(file)
     train_melodies = all_melodies['train'] #[[[76,74],[74],[72],[74],[76,76],[76],[76],[-1]]]
     test_melodies = all_melodies['test']
 
-    harmonization_agent = HarmonizationModel(gamma=0.95, alpha=0.1, checkpoint=CHECKPOINT) # defile model
-    rewards, completed_epochs = harmonization_agent.prepModel('./models/harmmodel_*.p')
+    harmonization_agent = HarmonizationModel(gamma=0.95, alpha=0.1, checkpoint=CHECKPOINT) # define model
+    rewards, completed_epochs = harmonization_agent.prepModel('./models/harmmodel_newdata_*.p')
 
     # handle out-of-range melodies!
     harmonization_epoch_rewards = harmonization_agent.trainAgent(train_melodies, num_epochs=n_epochs, epoch_rewards=rewards)
-    harmonization_agent.saveModel('./models/harmmodel_fulldata_' + DATESTR + '.p', n_epochs, harmonization_epoch_rewards)
+    harmonization_agent.saveModel('./models/harmmodel_newdata_' + DATESTR + '.p', n_epochs, harmonization_epoch_rewards)
 
     plotRewards(harmonization_epoch_rewards, 'HARMONIZATION', './results/harmonization_results/training_reward_' + DATESTR +'.png')
 
@@ -244,7 +244,7 @@ def harmonizationTraining(n_epochs):
     rand_voicings, rand_rewards = harmonization_agent.evalAgent(test_melodies[2], 5, fname="baseline_harmonization" + DATESTR, synth=True, rand=True)
 
 def voicingTraining(n_epochs, train=True):
-    with open('./data/jsb_major_chord_progs.yaml', 'r') as file:
+    with open('./data/jsb_maj_chord_progs.yaml', 'r') as file:
         chord_progressions = yaml.safe_load(file)
     train_progs = chord_progressions['train'] #[[[76,74],[74],[72],[74],[76,76],[76],[76],[-1]]]
     test_progs = chord_progressions['test']
@@ -266,10 +266,13 @@ def voicingTraining(n_epochs, train=True):
             break
 
 def freeTraining(n_epochs):
+    with open('./data/jsb_maj_orig_voicings.yaml', 'r') as file:
+        voicings = yaml.safe_load(file)
+
     free_agent = FreeModel(checkpoint=5000)
     rewards, completed_epochs = free_agent.prepModel('./models/voicemodel_*.p')
 
-    free_epoch_rewards = free_agent.trainAgent(num_epochs=n_epochs, epoch_rewards=rewards)
+    free_epoch_rewards = free_agent.trainAgent(num_epochs=n_epochs, epoch_rewards=rewards, voicings=voicings['train'])
     free_agent.saveModel('./models/freemodel'+DATESTR+'.p',n_epochs,free_epoch_rewards)
 
     plotRewards(free_epoch_rewards, 'FREE', './results/free_results/training_reward_' + DATESTR + '.png')
@@ -284,17 +287,17 @@ if __name__ == "__main__":
     n_epochs = 100000
     num_runs = 50
 
-    #print("Start harmonization training loop")
-    #harmonizationTraining(n_epochs)
+    print("Start harmonization training loop")
+    harmonizationTraining(n_epochs)
 
-    #print("Start voicing training loop")
-    #voicingTraining(n_epochs, train=False)
+    print("Start voicing training loop")
+    voicingTraining(n_epochs, train=False)
 
-    #print("Start free training loop")
-    #freeTraining(n_epochs)
+    print("Start free training loop")
+    freeTraining(n_epochs)
 
-    bachEval()
-    harmonizationEval(num_runs)
-    voicingEval(num_runs)
-    freeEval(num_runs)
+    #bachEval()
+    #harmonizationEval(num_runs)
+    #voicingEval(num_runs)
+    #freeEval(num_runs)
 
