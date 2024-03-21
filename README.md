@@ -27,7 +27,13 @@ We implement three models each designed to accomplish a slightly different task:
 
     d. Direct 5ths: outer parts move in the same direction into a P5 or P8 with a leap in the soprano part
 
-2. Create "training set" of chord progressions
+    e. Illegal common tones
+
+    f. Illegal leading tone resolutions
+
+    g. Illegal 7th approaches/resolutions
+
+2. Create "training set" of chord progressions and melodies 
 
 3. Function to convert algorithm output to MIDI
 

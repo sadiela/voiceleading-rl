@@ -29,7 +29,7 @@ def plotRewards(data, type, savepath):
     plt.clf() 
 
 def bachEval():
-    with open('./data/jsb_major_orig_voicings.yaml', 'r') as file:
+    with open('./data/jsb_maj_orig_voicings.yaml', 'r') as file:
         voicings = yaml.safe_load(file)
     test_voicings = voicings['test']
 
@@ -64,7 +64,7 @@ def bachEval():
 
 
 def freeEval(num_runs=50):
-    with open('./data/jsb_major_orig_voicings.yaml', 'r') as file:
+    with open('./data/jsb_maj_orig_voicings.yaml', 'r') as file:
         voicings = yaml.safe_load(file)
     test_voicings = voicings['test']
 
@@ -95,7 +95,7 @@ def freeEval(num_runs=50):
     print("LTs:", statistics.mean(avg_lt), statistics.stdev(avg_lt) , "\nCTs:", statistics.mean(avg_ct), statistics.stdev(avg_ct) , "\nSevs:", statistics.mean(avg_sev), statistics.stdev(avg_sev) )
 
 
-    print("MODEL FREE EVAL!", len(test_voicings))
+    '''print("MODEL FREE EVAL!", len(test_voicings))
     avg_vl, avg_hp, avg_vc, avg_p, avg_il, avg_d, avg_lt, avg_ct, avg_sev = [],[],[],[],[],[],[],[],[]
     for _ in tqdm(range(num_runs)):
         vl_rewards, hp_rewards, all_vc, all_parallels, all_illegal_leaps, all_direct, all_lt, all_ct, all_sev, all_harmonizations = free_agent.fullEvalAgent(test_voicings, fname="full_random_free" + DATESTR, synth=True, rand=False)
@@ -117,10 +117,10 @@ def freeEval(num_runs=50):
     print("VL reward:", statistics.mean(avg_vl), statistics.stdev(avg_vl), "\nHP reward:", statistics.mean(avg_hp), statistics.stdev(avg_hp),)
     print("VCs:", statistics.mean(avg_vc), statistics.stdev(avg_vc), "\nP58s:", statistics.mean(avg_p), statistics.stdev(avg_p) , "\nILs:", statistics.mean(avg_il), statistics.stdev(avg_il) , "\nD58s:", statistics.mean(avg_d), statistics.stdev(avg_d))
     print("LTs:", statistics.mean(avg_lt), statistics.stdev(avg_lt) , "\nCTs:", statistics.mean(avg_ct), statistics.stdev(avg_ct) , "\nSevs:", statistics.mean(avg_sev), statistics.stdev(avg_sev) )
-
+    '''
 
 def harmonizationEval(num_runs=50):
-    with open('./data/jsb_major_melodies.yaml', 'r') as file:
+    with open('./data/jsb_maj_melodies.yaml', 'r') as file:
             all_melodies = yaml.safe_load(file)
     test_melodies = all_melodies['test']
 
@@ -152,7 +152,7 @@ def harmonizationEval(num_runs=50):
     print("LTs:", statistics.mean(avg_lt), statistics.stdev(avg_lt) , "\nCTs:", statistics.mean(avg_ct), statistics.stdev(avg_ct) , "\nSevs:", statistics.mean(avg_sev), statistics.stdev(avg_sev) )
 
 
-    print("MODEL HARMONIZATION EVAL!", len(test_melodies))
+    '''print("MODEL HARMONIZATION EVAL!", len(test_melodies))
     avg_vl, avg_hp, avg_vc, avg_p, avg_il, avg_d, avg_lt, avg_ct, avg_sev = [],[],[],[],[],[],[],[],[]
     for _ in tqdm(range(num_runs)):
         vl_rewards, hp_rewards, all_vc, all_parallels, all_illegal_leaps, all_direct, all_lt, all_ct, all_sev, all_harmonizations = harmonization_agent.fullEvalAgent(test_melodies, fname="full_model_harmonization" + DATESTR, synth=True, rand=False)
@@ -174,10 +174,10 @@ def harmonizationEval(num_runs=50):
     print("VL reward:", statistics.mean(avg_vl), statistics.stdev(avg_vl), "\nHP reward:", statistics.mean(avg_hp), statistics.stdev(avg_hp),)
     print("VCs:", statistics.mean(avg_vc), statistics.stdev(avg_vc), "\nP58s:", statistics.mean(avg_p), statistics.stdev(avg_p) , "\nILs:", statistics.mean(avg_il), statistics.stdev(avg_il) , "\nD58s:", statistics.mean(avg_d), statistics.stdev(avg_d))
     print("LTs:", statistics.mean(avg_lt), statistics.stdev(avg_lt) , "\nCTs:", statistics.mean(avg_ct), statistics.stdev(avg_ct) , "\nSevs:", statistics.mean(avg_sev), statistics.stdev(avg_sev) )
-
+    '''
 
 def voicingEval(num_runs=50):
-    with open('./data/jsb_major_chord_progs.yaml', 'r') as file:
+    with open('./data/jsb_maj_chord_progs.yaml', 'r') as file:
             all_progs = yaml.safe_load(file)
     test_progs = all_progs['test']
 
@@ -204,7 +204,7 @@ def voicingEval(num_runs=50):
     print("VCs:", statistics.mean(avg_vc), statistics.stdev(avg_vc), "\nP58s:", statistics.mean(avg_p), statistics.stdev(avg_p) , "\nILs:", statistics.mean(avg_il), statistics.stdev(avg_il) , "\nD58s:", statistics.mean(avg_d), statistics.stdev(avg_d))
     print("LTs:", statistics.mean(avg_lt), statistics.stdev(avg_lt) , "\nCTs:", statistics.mean(avg_ct), statistics.stdev(avg_ct) , "\nSevs:", statistics.mean(avg_sev), statistics.stdev(avg_sev) )
 
-    print("MODEL VOICING EVAL!", len(test_progs))
+    '''print("MODEL VOICING EVAL!", len(test_progs))
     avg_vl, avg_vc, avg_p, avg_il, avg_d, avg_lt, avg_ct, avg_sev = [],[],[],[],[],[],[],[]
     for _ in tqdm(range(num_runs)):
         vl_rewards, all_vc, all_parallels, all_illegal_leaps, all_direct, all_lt, all_ct, all_sev, all_voicings = voicing_agent.fullEvalAgent(test_progs, fname="full_voicing" + DATESTR, synth=True, rand=False)
@@ -223,7 +223,7 @@ def voicingEval(num_runs=50):
     print("VL reward:", statistics.mean(avg_vl), statistics.stdev(avg_vl))
     print("VCs:", statistics.mean(avg_vc), statistics.stdev(avg_vc), "\nP58s:", statistics.mean(avg_p), statistics.stdev(avg_p) , "\nILs:", statistics.mean(avg_il), statistics.stdev(avg_il) , "\nD58s:", statistics.mean(avg_d), statistics.stdev(avg_d))
     print("LTs:", statistics.mean(avg_lt), statistics.stdev(avg_lt) , "\nCTs:", statistics.mean(avg_ct), statistics.stdev(avg_ct) , "\nSevs:", statistics.mean(avg_sev), statistics.stdev(avg_sev) )
-
+    '''
 
 def harmonizationTraining(n_epochs):
     with open('./data/jsb_major_melodies.yaml', 'r') as file:
@@ -235,7 +235,7 @@ def harmonizationTraining(n_epochs):
     rewards, completed_epochs = harmonization_agent.prepModel('./models/harmmodel_*.p')
 
     # handle out-of-range melodies!
-    harmonization_epoch_rewards = harmonization_agent.trainAgent(train_melodies, num_epochs=n_epochs-completed_epochs, epoch_rewards=rewards)
+    harmonization_epoch_rewards = harmonization_agent.trainAgent(train_melodies, num_epochs=n_epochs, epoch_rewards=rewards)
     harmonization_agent.saveModel('./models/harmmodel_fulldata_' + DATESTR + '.p', n_epochs, harmonization_epoch_rewards)
 
     plotRewards(harmonization_epoch_rewards, 'HARMONIZATION', './results/harmonization_results/training_reward_' + DATESTR +'.png')
@@ -254,7 +254,7 @@ def voicingTraining(n_epochs, train=True):
     rewards, completed_epochs = voicing_agent.prepModel('./models/voicemodel_*.p')
 
     if train: 
-        voicing_epoch_rewards = voicing_agent.trainAgent(train_progs, num_epochs=n_epochs-completed_epochs, epoch_rewards=rewards)
+        voicing_epoch_rewards = voicing_agent.trainAgent(train_progs, num_epochs=n_epochs, epoch_rewards=rewards)
         voicing_agent.saveModel('./models/voicemodel'+DATESTR+'.p',n_epochs, voicing_epoch_rewards)
 
         plotRewards(voicing_epoch_rewards, 'VOICING', './results/voicing_results/training_reward_' + DATESTR +'.png')
@@ -269,7 +269,7 @@ def freeTraining(n_epochs):
     free_agent = FreeModel(checkpoint=5000)
     rewards, completed_epochs = free_agent.prepModel('./models/voicemodel_*.p')
 
-    free_epoch_rewards = free_agent.trainAgent(num_epochs=n_epochs-completed_epochs, epoch_rewards=rewards)
+    free_epoch_rewards = free_agent.trainAgent(num_epochs=n_epochs, epoch_rewards=rewards)
     free_agent.saveModel('./models/freemodel'+DATESTR+'.p',n_epochs,free_epoch_rewards)
 
     plotRewards(free_epoch_rewards, 'FREE', './results/free_results/training_reward_' + DATESTR + '.png')
@@ -294,7 +294,7 @@ if __name__ == "__main__":
     #freeTraining(n_epochs)
 
     bachEval()
-    #harmonizationEval()
-    #voicingEval()
-    #freeEval(num_runs)
+    harmonizationEval(num_runs)
+    voicingEval(num_runs)
+    freeEval(num_runs)
 

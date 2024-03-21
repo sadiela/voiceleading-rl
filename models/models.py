@@ -15,10 +15,12 @@ def flipCoin(p):
   return r < p 
 
 class Qlearner():
-    def __init__(self, alpha=0.1, gamma=.9, epsilon=0.3, checkpoint=500):
+    def __init__(self, alpha=0.1, gamma=.9, epsilon_init=0.5, epsilon_end=0.05, checkpoint=500):
         self.alpha = alpha
         self.gamma = gamma
-        self.epsilon = epsilon
+        self.epsilon_init = epsilon_init 
+        self.epsilon = epsilon_init
+        self.epsilon_end = epsilon_end
         self.Qvalues = 0 # some matrix
         self.checkpoint = checkpoint
 
@@ -116,8 +118,8 @@ class Qlearner():
  
 # Class freelancer inherits EMP
 class VoicingModel(Qlearner):
-    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2, checkpoint=500, resultsdir='./results/voicing_results/'):
-        super().__init__(alpha, gamma, epsilon, checkpoint)
+    def __init__(self, alpha=0.1, gamma=0.6,  checkpoint=500, resultsdir='./results/voicing_results/'):
+        super().__init__(alpha, gamma, checkpoint)
         self.results_dir = resultsdir
         self.rewardFunction = voice_leading_reward_function
     
@@ -131,7 +133,9 @@ class VoicingModel(Qlearner):
                 
     def trainAgent(self, chord_progressions, num_epochs=1000, epoch_rewards=[]):
         epoch_reward=0
-        for i in range(1,num_epochs):
+        for i in range(len(epoch_rewards)+1,num_epochs):
+            # will start close to epsilon_init and move closer to epsilon_end as i increases
+            self.epsilon = (self.epsilon_init-self.epsilon_end)*((num_epochs - i)/num_epochs) + self.epsilon_end
             if i%self.checkpoint == 0:
                 print("epoch:", i, epoch_reward)
                 self.saveModel('./models/voicingmodel_' + datetime.today().strftime("%m_%d") + '_' + str(i) + '.p', i, epoch_rewards)
@@ -270,8 +274,8 @@ class VoicingModel(Qlearner):
 
 
 class HarmonizationModel(Qlearner):
-    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2, checkpoint=500, resultsdir='./results/harmonization_results/', ):
-        super().__init__(alpha, gamma, epsilon, checkpoint)
+    def __init__(self, alpha=0.1, gamma=0.6,  checkpoint=500, resultsdir='./results/harmonization_results/', ):
+        super().__init__(alpha, gamma, checkpoint)
         self.results_dir = resultsdir
         self.rewardFunction = harmonization_reward_function # specify reward function in constructor
 
@@ -287,7 +291,8 @@ class HarmonizationModel(Qlearner):
 
     def trainAgent(self, melodies, num_epochs=1000, epoch_rewards=[]):
         epoch_reward=0
-        for i in tqdm(range(1,num_epochs)):
+        for i in range(len(epoch_rewards)+1,num_epochs):
+            self.epsilon = (self.epsilon_init-self.epsilon_end)*((num_epochs - i)/num_epochs) + self.epsilon_end
             if i%self.checkpoint == 0:
                 print("epoch:", i, epoch_reward)
                 self.saveModel('./models/harmmodel_' + datetime.today().strftime("%m_%d") + '_' + str(i) + '.p', i, epoch_rewards)
@@ -430,14 +435,15 @@ class HarmonizationModel(Qlearner):
         return sum(all_vl_rewards), sum(all_hp_rewards), sum(all_vc), sum(all_parallels), sum(all_illegal_leaps), sum(all_direct), sum(all_lt), sum(all_ct), sum(all_sev), all_harms   
 
 class FreeModel(Qlearner): # uses default getLegalActions
-    def __init__(self, alpha=0.1, gamma=0.6, epsilon=0.2, checkpoint=500, resultsdir='./results/free_results/'):
-        super().__init__(alpha, gamma, epsilon, checkpoint)
+    def __init__(self, alpha=0.1, gamma=0.6, checkpoint=500, resultsdir='./results/free_results/'):
+        super().__init__(alpha, gamma, checkpoint)
         self.results_dir = resultsdir
         self.rewardFunction = harmonization_reward_function
 
     def trainAgent(self, length=16, num_epochs=5000, epoch_rewards=[]):
         epoch_reward=0
-        for i in range(num_epochs):
+        for i in range(len(epoch_rewards)+1,num_epochs):
+            self.epsilon = (self.epsilon_init-self.epsilon_end)*((num_epochs - i)/num_epochs) + self.epsilon_end
             if i%self.checkpoint == 0:
                 print("epoch:", i, epoch_reward)
                 self.saveModel('./models/freemodel_' + datetime.today().strftime("%m_%d") + '_' + str(i) + '.p', i, epoch_rewards)
