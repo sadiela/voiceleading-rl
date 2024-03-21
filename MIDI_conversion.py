@@ -12,6 +12,15 @@ from pathlib import Path
 from numpy import ndarray
 import os
 import sys
+import librosa
+from scipy.io.wavfile import write
+
+def crop_wav(wavpath, length=15, sr=16000): 
+    data, sr = librosa.load(wavpath, sr=sr)
+    print(len(data), data)
+    trimmed = data[:sr*length]
+    print(len(trimmed))
+    write(wavpath.split('.')[0] + '_trimmed.wav', sr,  trimmed)
 
 def get_free_filename(stub, suffix='', directory='./results/', date=False):
     # Create unique file/directory 

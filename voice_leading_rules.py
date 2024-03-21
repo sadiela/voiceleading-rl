@@ -1,14 +1,14 @@
 from state_space_def import * 
 from pretty_midi import note_name_to_number
 
-ILL_LEAP =  0.1417
-VC =  0.1397
-PERF58 = 0.0402
-DIR58 = 0.1383
-ILL_CT = 0.1293
-ILL_LT_RES = 0.128
-ILL_7_APP = 0.1428
-ILL_7_RES = 0.14
+ILL_LEAP =  0.1407
+VC =  0.1281
+PERF58 = 0.0919
+DIR58 = 0.1229
+ILL_CT = 0.1063
+ILL_LT_RES = 0.1291
+ILL_7_APP = 0.1427
+ILL_7_RES = 0.1383
 
 def illegal_leaps(state, next_state): 
     # returns number of instances of an illegal leap 

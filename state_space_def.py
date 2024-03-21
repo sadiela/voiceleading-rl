@@ -63,7 +63,6 @@ def second_inversion_triad_doubling(next_state):
             return 1
     return 0
 ########################################################
-
 def is_complete(voicing, chord): 
     unique_notes = [] 
     for pitch in voicing: 
@@ -151,8 +150,20 @@ def gen_triad_options(chord_num):
     chord_options = []
     root, third, fifth = pitches_in_triads_major[chord_num] # need one of each, but they can be in any position besides the root
 
+    # third doubled
+    for r in root: # doubled third
+        for t1 in third:
+            for t2 in third: 
+                for f in fifth: 
+                    cur_combo = [r, t1, t2, f]
+                    cur_combo.sort()
+                    if cur_combo not in chord_options and determine_chord_validity(cur_combo):
+                        chord_options.append(cur_combo)
+    if chord_num == 7: 
+        return chord_options # because we only want doubled 3rd for diminished chords
+
     # incomplete 
-    for r in root: # doubled root 
+    for r in root: # TRIPLED root 
         for r2 in root: 
             for r3 in root:
                 for t in third: 
@@ -167,16 +178,6 @@ def gen_triad_options(chord_num):
             for t in third:
                 for f in fifth: 
                     cur_combo = [r, r2, t, f]
-                    cur_combo.sort()
-                    if cur_combo not in chord_options and determine_chord_validity(cur_combo):
-                        chord_options.append(cur_combo)
-
-    # third doubled
-    for r in root: # doubled fifth
-        for t1 in third:
-            for t2 in third: 
-                for f in fifth: 
-                    cur_combo = [r, t1, t2, f]
                     cur_combo.sort()
                     if cur_combo not in chord_options and determine_chord_validity(cur_combo):
                         chord_options.append(cur_combo)
