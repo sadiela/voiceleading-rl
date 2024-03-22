@@ -284,7 +284,7 @@ if __name__ == "__main__":
     ###########################
     ### HARMONIZATION MODEL ###
     ###########################
-    n_epochs = 100000
+    n_epochs = 10000
     num_runs = 50
 
     print("Start harmonization training loop")

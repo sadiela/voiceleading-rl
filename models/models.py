@@ -291,7 +291,7 @@ class HarmonizationModel(Qlearner):
 
     def trainAgent(self, melodies, num_epochs=1000, epoch_rewards=[]):
         epoch_reward=0
-        for i in range(len(epoch_rewards)+1,num_epochs):
+        for i in tqdm(range(len(epoch_rewards)+1,num_epochs)):
             self.epsilon = (self.epsilon_init-self.epsilon_end)*((num_epochs - i)/num_epochs) + self.epsilon_end
             if i%self.checkpoint == 0:
                 print("epoch:", i, epoch_reward)
