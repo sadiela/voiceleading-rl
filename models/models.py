@@ -133,7 +133,7 @@ class VoicingModel(Qlearner):
                 
     def trainAgent(self, chord_progressions, num_epochs=1000, epoch_rewards=[]):
         epoch_reward=0
-        for i in range(len(epoch_rewards)+1,num_epochs):
+        for i in tqdm(range(len(epoch_rewards)+1,num_epochs)):
             # will start close to epsilon_init and move closer to epsilon_end as i increases
             self.epsilon = (self.epsilon_init-self.epsilon_end)*((num_epochs - i)/num_epochs) + self.epsilon_end
             if i%self.checkpoint == 0:
@@ -290,13 +290,9 @@ class HarmonizationModel(Qlearner):
         return legal_chords
 
     def trainAgent(self, melodies, num_epochs=1000, epoch_rewards=[]):
-        epoch_reward=0
         for i in tqdm(range(len(epoch_rewards)+1,num_epochs)):
+            epoch_reward=0
             self.epsilon = (self.epsilon_init-self.epsilon_end)*((num_epochs - i)/num_epochs) + self.epsilon_end
-            if i%self.checkpoint == 0:
-                print("epoch:", i, epoch_reward)
-                self.saveModel('./models/harmmodel_' + datetime.today().strftime("%m_%d") + '_' + str(i) + '.p', i, epoch_rewards)
-            epoch_reward = 0
             for melody in melodies:
                 for j, c in enumerate(melody):
                     if melody[j+1][0] == -1: # DONE WITH LOOP!
@@ -315,6 +311,10 @@ class HarmonizationModel(Qlearner):
                     # update q_val
                     self.update(cur_state, next_state, vl_reward + harm_prog_reward, context=melody[j+2])
                     cur_state=next_state
+            
+            if i%self.checkpoint == 0:
+                print("epoch:", i, epoch_reward)
+                self.saveModel('./models/harmmodel_' + datetime.today().strftime("%m_%d") + '_' + str(i) + '.p', i, epoch_rewards)
 
             epoch_rewards.append(epoch_reward)
         return epoch_rewards
@@ -325,6 +325,10 @@ class HarmonizationModel(Qlearner):
         for i in range(num_voicings):
             state_list = []
             total_reward = 0
+            num_voice_crossings = 0
+            num_parallels = 0
+            num_illegal_leaps = 0
+            num_direct = 0
             for j, c in enumerate(melody): # MELODY NEEDS TO BE LIST OF LISTS!
                 if melody[j+1][0] == -1: # DONE WITH LOOP!
                     break
@@ -339,7 +343,7 @@ class HarmonizationModel(Qlearner):
                 state_list.append(next_state)
 
                 vl_reward, harm_prog_reward, vc, p58, il, d58, lt, ct, sev = self.calculateRewards(cur_state, chosen_action)
-                epoch_reward += vl_reward + harm_prog_reward
+                total_reward += vl_reward + harm_prog_reward
                 num_voice_crossings += vc
                 num_parallels += p58
                 num_illegal_leaps += il  
@@ -443,7 +447,7 @@ class FreeModel(Qlearner): # uses default getLegalActions
     def trainAgent(self, num_epochs=5000, epoch_rewards=[], voicings=None):
         # voicings are passed in just to provide episodes/episode lengths consistent with other model runs
         epoch_reward=0
-        for i in range(len(epoch_rewards)+1,num_epochs):
+        for i in tqdm(range(len(epoch_rewards)+1,num_epochs)):
             self.epsilon = (self.epsilon_init-self.epsilon_end)*((num_epochs - i)/num_epochs) + self.epsilon_end
             if i%self.checkpoint == 0:
                 print("epoch:", i, epoch_reward)
