@@ -15,14 +15,13 @@ def flipCoin(p):
   return r < p 
 
 class Qlearner():
-    def __init__(self, alpha=0.1, gamma=.9, epsilon_init=0.5, epsilon_end=0.05, checkpoint=500):
+    def __init__(self, alpha=0.1, gamma=.9, epsilon_init=0.5, epsilon_end=0.05):
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon_init = epsilon_init 
         self.epsilon = epsilon_init
         self.epsilon_end = epsilon_end
         self.Qvalues = 0 # some matrix
-        self.checkpoint = checkpoint
 
         with open('./dictionaries/chord_dict_3.yaml', 'r') as file:
             self.chord_dict = yaml.safe_load(file)
@@ -105,7 +104,7 @@ class Qlearner():
             if best:
                 return best_action
             else: 
-                if flipCoin(self.epsilon):
+                if flipCoin(self.epsilon): # epsilon-greedy!
                     return random.choice(legal_actions) # this includes the best action... is that what i want? 
                 else: 
                     return best_action
@@ -119,9 +118,10 @@ class Qlearner():
 # Class freelancer inherits EMP
 class VoicingModel(Qlearner):
     def __init__(self, alpha=0.1, gamma=0.6,  checkpoint=500, resultsdir='./results/voicing_results/'):
-        super().__init__(alpha, gamma, checkpoint)
+        super().__init__(alpha, gamma)
         self.results_dir = resultsdir
         self.rewardFunction = voice_leading_reward_function
+        self.checkpoint = checkpoint
     
     def getLegalActions(self, context=None):
         if context==None:
@@ -133,6 +133,7 @@ class VoicingModel(Qlearner):
                 
     def trainAgent(self, chord_progressions, num_epochs=1000, epoch_rewards=[]):
         epoch_reward=0
+        print("CHECKPOINT", self.checkpoint)
         for i in tqdm(range(len(epoch_rewards)+1,num_epochs)):
             # will start close to epsilon_init and move closer to epsilon_end as i increases
             self.epsilon = (self.epsilon_init-self.epsilon_end)*((num_epochs - i)/num_epochs) + self.epsilon_end
@@ -275,9 +276,10 @@ class VoicingModel(Qlearner):
 
 class HarmonizationModel(Qlearner):
     def __init__(self, alpha=0.1, gamma=0.6,  checkpoint=500, resultsdir='./results/harmonization_results/', ):
-        super().__init__(alpha, gamma, checkpoint)
+        super().__init__(alpha, gamma)
         self.results_dir = resultsdir
         self.rewardFunction = harmonization_reward_function # specify reward function in constructor
+        self.checkpoint = checkpoint
 
     def getLegalActions(self,context=None):
         if context==None:
@@ -307,7 +309,7 @@ class HarmonizationModel(Qlearner):
                     # receive reward
                     
                     vl_reward, harm_prog_reward, _,_,_,_,_,_,_ = self.calculateRewards(cur_state, next_state)
-                    epoch_reward += vl_reward + harm_prog_reward
+                    epoch_reward += (vl_reward + harm_prog_reward)
                     # update q_val
                     self.update(cur_state, next_state, vl_reward + harm_prog_reward, context=melody[j+2])
                     cur_state=next_state
@@ -440,9 +442,10 @@ class HarmonizationModel(Qlearner):
 
 class FreeModel(Qlearner): # uses default getLegalActions
     def __init__(self, alpha=0.1, gamma=0.6, checkpoint=500, resultsdir='./results/free_results/'):
-        super().__init__(alpha, gamma, checkpoint)
+        super().__init__(alpha, gamma)
         self.results_dir = resultsdir
         self.rewardFunction = harmonization_reward_function
+        self.checkpoint = checkpoint
 
     def trainAgent(self, num_epochs=5000, epoch_rewards=[], voicings=None):
         # voicings are passed in just to provide episodes/episode lengths consistent with other model runs
