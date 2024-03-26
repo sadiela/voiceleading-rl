@@ -13,6 +13,7 @@ from numpy import ndarray
 import os
 import sys
 import librosa
+from datetime import datetime
 from scipy.io.wavfile import write
 
 def crop_wav(wavpath, length=15, sr=16000): 
@@ -59,6 +60,25 @@ def state_seq_to_MIDI(state_seq, state_indices, dir, desired_fstub='seqmid', not
     midi_obj.instruments.append(piano)
     midi_obj.write(desired_filename)
     return desired_filename
+
+def state_seq_to_MIDI_durations(state_seq, dur_seq, state_indices, dir, desired_fstub='seqmid', note_dur=1): 
+    desired_filename = get_free_filename(desired_fstub, '.mid', directory=dir)
+    # Create a PrettyMIDI object
+    midi_obj = pretty_midi.PrettyMIDI() # init tempo is 120, so a quarter note is 0.5 sec
+    # Create an Instrument instance for a cello instrument
+    piano = pretty_midi.Instrument(program=1)
+    cur_time = 0
+    for state, dur in zip(state_seq[:-1], dur_seq): 
+        notes = state_indices[state]
+        for note in notes: 
+            # Create a Note instance, starting at 0s and ending at 1s
+            note_obj = pretty_midi.Note(
+                velocity=100, pitch=note, start=cur_time*note_dur, end=cur_time + note_dur*int(dur))
+            piano.notes.append(note_obj)
+        cur_time += dur
+    midi_obj.instruments.append(piano)
+    midi_obj.write(desired_filename)
+    return desired_filename, midi_obj
 
 def one_part_note_list(part, note_dur = 1):
     notes = []
@@ -254,9 +274,9 @@ def test_different_midi_instruments(pm, res_folder):
 
     midis_to_wavs(res_folder)
 
-def gen_result_midis(state_seqs, state_indices, res_folder, fstub):
-    for seq in state_seqs: 
-        new_mid, new_pm = state_seq_to_MIDI_better(seq, state_indices, res_folder, fstub)
+def gen_result_midis(state_seqs, durations, state_indices, res_folder, fstub):
+    for seq,durs in zip(state_seqs, durations): 
+        new_mid, new_pm = state_seq_to_MIDI_durations(seq, durs, state_indices, res_folder, fstub)
         midi_to_wav(new_mid)
 
 if __name__ == "__main__":
@@ -264,11 +284,24 @@ if __name__ == "__main__":
     with open('./dictionaries/state_dict_3.yaml', 'r') as file:
         state_indices = yaml.safe_load(file)
 
+    with open('./data/jsb_maj_durations.yaml') as file:
+        durations = yaml.safe_load(file)
+
+    test_durations = durations['test']
+
+    longer_durs = [] 
+    for i, durs in enumerate(test_durations):
+        if len(durs) > 4 and len(durs) < 8:
+            print(len(durs))
+            longer_durs.append(i)
+    print("NUMBER:", len(longer_durs))
+    print(longer_durs)
+
     '''with open('./data/jsb_major_orig_voicings.yaml', 'r') as file: 
         jsb_voicings = yaml.safe_load(file)
 
     test_vocs = jsb_voicings['test']
-    gen_result_midis(test_vocs, state_indices, './results/human_eval/bach/', 'jsb')'''
+    gen_result_midis(test_vocs, state_indices, './results/human_eval/bach/', 'jsb')
     
     with open('./results/for_table/random_voicings.yaml', 'r') as file: 
         rand_voc_seqs = yaml.safe_load(file)
@@ -286,14 +319,14 @@ if __name__ == "__main__":
         rand_free_seqs = yaml.safe_load(file)
 
     with open('./results/for_table/model_free.yaml', 'r') as file: 
-        mod_free_seqs = yaml.safe_load(file)
+        mod_free_seqs = yaml.safe_load(file)'''
 
-    gen_result_midis(rand_voc_seqs, state_indices, './results/human_eval/voicing/', 'random')
-    gen_result_midis(mod_voc_seqs, state_indices, './results/human_eval/voicing/', 'mod')
-    gen_result_midis(rand_harm_seqs, state_indices, './results/human_eval/harm/', 'random')
-    gen_result_midis(mod_harm_seqs, state_indices, './results/human_eval/harm/', 'mod')
-    gen_result_midis(rand_free_seqs, state_indices, './results/human_eval/free/', 'random')
-    gen_result_midis(mod_free_seqs, state_indices, './results/human_eval/free/', 'mod')
+    #gen_result_midis(rand_voc_seqs, test_durations, state_indices, './results/human_eval/voicing/', 'random')
+    #gen_result_midis(mod_voc_seqs, test_durations, state_indices, './results/human_eval/voicing/', 'mod')
+    #gen_result_midis(rand_harm_seqs, test_durations, state_indices, './results/human_eval/harm/', 'random')
+    #gen_result_midis(mod_harm_seqs, test_durations, state_indices, './results/human_eval/harm/', 'mod')
+    #gen_result_midis(rand_free_seqs, test_durations, state_indices, './results/human_eval/free/', 'random')
+    #gen_result_midis(mod_free_seqs, test_durations, state_indices, './results/human_eval/free/', 'mod')
 
     sys.exit(0)
 

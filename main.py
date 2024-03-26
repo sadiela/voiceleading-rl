@@ -143,7 +143,7 @@ def harmonizationEval(num_runs=50):
         avg_sev.append(all_sev)
 
     # SAVE HARMONIZATIONS! (for last iteration I guess)
-    with open('./results/for_table/random_harmonizatons.yaml', 'w') as outfile:
+    with open('./results/for_table/random_harmonizations.yaml', 'w') as outfile:
         yaml.dump(all_harmonizations, outfile, default_flow_style=False)
     #print(sum(vl_rewards), sum(all_vc), sum(all_parallels), sum(all_illegal_leaps), sum(all_direct))
 
@@ -167,7 +167,7 @@ def harmonizationEval(num_runs=50):
         avg_sev.append(all_sev)
 
     # SAVE HARMONIZATIONS!
-    with open('./results/for_table/model_harmonizatons.yaml', 'w') as outfile:
+    with open('./results/for_table/model_harmonizations.yaml', 'w') as outfile:
         yaml.dump(all_harmonizations, outfile, default_flow_style=False)
     #print(sum(vl_rewards), sum(all_vc), sum(all_parallels), sum(all_illegal_leaps), sum(all_direct))
 

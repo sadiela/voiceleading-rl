@@ -88,9 +88,12 @@ class Qlearner():
             curQ = self.getQValue(state, next_action)
             action_val_pairs.append((next_action, curQ))
         action_val_pairs.sort(key=lambda x: x[1], reverse=True)
+        #print(action_val_pairs[0:5])
+        #input("Continue...")
         return action_val_pairs[0]
     
     def getAction(self, state=None, context=-2, best=False, rand=False): # Set rand = TRUE for baseline comparison
+        #print("Context", context, state)
         if context==-1:
             print("NO LEGAL MOVE")
             return None 
@@ -98,7 +101,7 @@ class Qlearner():
         if rand == True: # USE FOR BASELINE!!!!
             return random.choice(legal_actions)
         if state is None:
-            return random.choice(legal_actions)
+            return random.choice(legal_actions) # choose initial state randomly
         else:
             best_action, _ = self.computeActionValuesFromQValues(state, legal_actions)
             if best:
@@ -320,6 +323,25 @@ class HarmonizationModel(Qlearner):
 
             epoch_rewards.append(epoch_reward)
         return epoch_rewards
+    
+    def getHarmonization(self, melody):
+        harmonization = [] 
+        for j, c in enumerate(melody):
+            if melody[j+1][0] == -1: # DONE WITH LOOP!
+                    break
+            if j == 0: # choose starting state
+                cur_state = self.getAction(context=melody[j], best=True)
+                harmonization.append(cur_state)
+
+            chosen_action = self.getAction(state=cur_state, context=melody[j+1], best=True, rand=False)
+                
+            next_state = chosen_action
+            harmonization.append(next_state)
+
+            cur_state=next_state       
+
+        return harmonization         
+
     
     def evalAgent(self, melody, num_voicings, fname=None, synth=False, rand=False): # set rand=True to compare to random baseline 
         all_voicings = []
