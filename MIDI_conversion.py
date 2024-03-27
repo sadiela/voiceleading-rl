@@ -15,6 +15,7 @@ import sys
 import librosa
 from datetime import datetime
 from scipy.io.wavfile import write
+import pandas as pd
 
 def crop_wav(wavpath, length=15, sr=16000): 
     data, sr = librosa.load(wavpath, sr=sr)
@@ -279,13 +280,105 @@ def gen_result_midis(state_seqs, durations, state_indices, res_folder, fstub):
         new_mid, new_pm = state_seq_to_MIDI_durations(seq, durs, state_indices, res_folder, fstub)
         midi_to_wav(new_mid)
 
+def gen_harmonization_csv():
+    melodies, randoms, qs, doodles, bachs = [],[],[],[],[]
+    base_melody_url = 'https://harmonization-mturk.s3.us-east-2.amazonaws.com/melody-'
+    base_random_url = 'https://harmonization-mturk.s3.us-east-2.amazonaws.com/random-'
+    base_q_url = 'https://harmonization-mturk.s3.us-east-2.amazonaws.com/mod-'
+    base_doodle_url = 'https://harmonization-mturk.s3.us-east-2.amazonaws.com/doodle-'
+    base_bach_url = 'https://harmonization-mturk.s3.us-east-2.amazonaws.com/bach-'
+    indices = [0,2,4,17, 18, 19, 25, 26, 27, 28, 31, 40, 41, 43, 46, 47, 51, 53, 59, 60, 63, 64, 66, 67, 70, 74, 79, 86, 99, 100, 109, 112, 117, 119, 120, 121, 122, 145, 157, 158, 159, 160, 171, 176, 179, 183, 186, 189, 192, 204, 205, 223, 239, 244, 245, 247, 248, 258, 259, 263, 270, 273, 275, 276, 280, 283, 284, 285, 287, 296, 303, 305, 308, 311, 313, 314, 315, 317, 319, 322, 323, 328, 329, 330, 332, 333, 335, 336, 341, 342, 346, 349, 350, 352, 359, 360, 361, 363, 366, 368, 370, 373]
+    for index in indices: 
+        cur_melody_url = base_melody_url + str(index) + '.wav'
+        cur_random_url = base_random_url + str(index) + '.wav'
+        cur_q_url = base_q_url + str(index) + '.wav'
+        cur_doodle_url = base_doodle_url + str(index) + '.wav'
+        cur_bach_url = base_bach_url + str(index) + '.wav'
+        melodies.append(cur_melody_url)
+        randoms.append(cur_random_url)
+        qs.append(cur_q_url)
+        doodles.append(cur_doodle_url)
+        bachs.append(cur_bach_url)
+
+    d = {'melody_url': melodies, 
+         'random_url': randoms,
+         'q_url': qs,
+         'doodle_url': doodles,
+         'bach_url': bachs}
+    df = pd.DataFrame(data=d)
+    df.to_csv('./results/mechanicalturk_csvs/input.csv', index=False)  
+
+
+def voicings_to_MIDI_durations(voicing_seq, dur_seq, dir, desired_fstub='seqmid', note_dur=1): 
+    desired_filename = get_free_filename(desired_fstub, '.mid', directory=dir)
+    # Create a PrettyMIDI object
+    midi_obj = pretty_midi.PrettyMIDI() # init tempo is 120, so a quarter note is 0.5 sec
+    # Create an Instrument instance for a cello instrument
+    piano = pretty_midi.Instrument(program=1)
+    cur_time = 0
+    for notes, dur in zip(voicing_seq, dur_seq): 
+        for note in notes: 
+            # Create a Note instance, starting at 0s and ending at 1s
+            note_obj = pretty_midi.Note(
+                velocity=100, pitch=note, start=cur_time*note_dur, end=cur_time + note_dur*int(dur))
+            piano.notes.append(note_obj)
+        cur_time += dur
+    midi_obj.instruments.append(piano)
+    midi_obj.write(desired_filename)
+    return desired_filename, midi_obj
+
+def melodies_to_MIDI_durations(mel_seq, dur_seq, dir, desired_fstub='seqmid', note_dur=1): 
+    desired_filename = get_free_filename(desired_fstub, '.mid', directory=dir)
+    # Create a PrettyMIDI object
+    midi_obj = pretty_midi.PrettyMIDI() # init tempo is 120, so a quarter note is 0.5 sec
+    # Create an Instrument instance for a cello instrument
+    piano = pretty_midi.Instrument(program=1)
+    cur_time = 0
+    for notes, dur in zip(mel_seq, dur_seq):
+        if len(notes)==1:
+            if notes[0] == -1 : 
+                break
+            note_obj = pretty_midi.Note(
+                velocity=100, pitch=notes[0], start=cur_time*note_dur, end=cur_time + note_dur*int(dur))
+            piano.notes.append(note_obj)
+        else:
+            print("ERROR: too many melody notes")
+            sys.exit()
+        cur_time += dur
+    midi_obj.instruments.append(piano)
+    midi_obj.write(desired_filename)
+    return desired_filename, midi_obj
+
 if __name__ == "__main__":
+
+    gen_harmonization_csv()
+
+    sys.exit(0)
 
     with open('./dictionaries/state_dict_3.yaml', 'r') as file:
         state_indices = yaml.safe_load(file)
 
+    with open('./data/jsb_maj_melodies.yaml') as file:
+        melodies = yaml.safe_load(file)
+
     with open('./data/jsb_maj_durations.yaml') as file:
         durations = yaml.safe_load(file)
+
+    with open('./data/jsb_maj_orig_voicings.yaml') as file:
+        voicings = yaml.safe_load(file)
+
+    melody_dir = './results/human_eval/melodies/'
+    for melody, duration in zip(melodies['test'], durations['test']): 
+        new_mid, new_pm = melodies_to_MIDI_durations(melody, duration, melody_dir, desired_fstub='melody', note_dur=1)
+        midi_to_wav(new_mid)
+
+    sys.exit(0)
+
+    orig_dir = './results/human_eval/bach/'
+    for voicing, duration in zip(voicings['test'], durations['test']): 
+        new_mid, new_pm = voicings_to_MIDI_durations(voicing, duration, orig_dir, desired_fstub='bach', note_dur=1)
+        midi_to_wav(new_mid)
+    ### CREATE MIDIS FOR ORIGINAL VOICINGS ### 
 
     test_durations = durations['test']
 
