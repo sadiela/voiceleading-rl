@@ -279,7 +279,7 @@ def test_different_midi_instruments(pm, res_folder):
 idx_to_str_dict = { 
 	0: [['F2','F3','A3','C4'], ['E2','C3','B3','G4'], ['D2','D3','A3','F4'], ['C1','C2','A3','E4'], ['G2','B2','G3','D4'], ['A2','A2','E3','C4']],
 	2: [['C3','E3','G3','E4'], ['C3','E3','C4','A4'], ['A2','C3','C4','A4'], ['B2','D3','D4','G4'], ['A2','C3','C4','F4'], ['A2','C3','A3','F4'], ['C3','G2','A3','E4']],
-	17:[['C3','G4','C5''E5'], ['E3','E4','G4','C5'], ['E3','E4','G4','C5'], ['E3','D4','G4','D5'], ['G2','C4','G4','E5']],
+	17:[['C3','G4','C5','E5'], ['E3','E4','G4','C5'], ['E3','E4','G4','C5'], ['E3','D4','G4','D5'], ['G2','C4','G4','E5']],
 	18: [['F3','D4','B4','G5'], ['F3','C4','A4','F5'], ['G3','B3','D4','F5'], ['A3','C4','A4','E5'], ['C4','E4','A4','E5']],
 	19: [['B2','D4','F4','D5'], ['C3','C4','E4','G4'], ['E3','G3','E4','C5'], ['G3','B3','G4','D5'], ['B2','D4','G4','D5'], ['C3','G3','G4','E5']],
 	25: [['B2','D3','F4','A4'], ['C3','D#3','C4','G4'], ['D#3','F3','C4','G4'], ['C3','D#3','C4','A4'], ['A#2','D3','A#3','A4'], ['D#2','D#3','A#3','G4']],
@@ -309,7 +309,7 @@ idx_to_str_dict = {
 	183:[['G3','B3','G4','D5'], ['B3','B3','F#4','D5'], ['E3','E4','G4','C5'], ['F#3','A3','A4','C5'], ['G3','D4','G4','B4'], ['C4','E4','G4','C5']],
 	189:[['D4','F4','A4','F5'], ['C4','E4','C5','G5'], ['D4','F4','A4','F5'], ['G3','B3','G4','F5'], ['C3','C3','G4','E5']],
 	205:[['E3','G3','G4','C5'], ['A#3','A#3','F4','D5'], ['G#3','B3','E4','D5'], ['A3','C#4','A4','E5'], ['D3','D4','A4','F5'], ['D3','D4','A4','F5'], ['D3','D4','A4','F5']],
-	223:[['F3','C4','A4','C5'], ['F3','C4','A4','F5'], ['F3','D4','A4','F5'], ['G3','C#4','A#4','F5'], ['A3','C#4','A4','E5'], ['D4','D4','A4','F5'], ['','','A4','F5']],
+	223:[['F3','C4','A4','C5'], ['F3','C4','A4','F5'], ['F3','D4','A4','F5'], ['G3','C#4','A#4','F5'], ['A3','C#4','A4','E5'], ['D4','D4','A4','F5'], ['C3','C3','A4','F5']],
 	239:[['F3','C4','A4','F5'], ['D3','D4','A4','F5'], ['C3','C4','G4','E5'], ['C4','C4','G4','E5'], ['A3','C4','F4','F5'], ['A3','C4','F4','F5']],
 	244:[['F3','F4','B4','D5'], ['A3','E4','A4','C5'], ['B3','D4','G4','D5'], ['C3','C4','G4','E5'], ['A3','C4','F#4','E5']],
 	245:[['A3','E4','A4','C5'], ['B3','D4','A4','D5'], ['C4','C4','G4','E5'], ['G3','B3','G4','E5'], ['F#3','C4','A4','E5'], ['F#3','C4','A4','E5']],
@@ -333,11 +333,10 @@ def idx_to_pitch_num():
     idx_to_pitch = {}
     for idx in idx_to_str_dict.keys():
         cur_voicing_strs = idx_to_str_dict[idx]
-        print(cur_voicing_strs)
-        #[word for sentence in text for word in sentence]
-        cur_voicing_pitches = [pretty_midi.note_name_to_number(note) for chord in cur_voicing_strs for note in chord]
-        print(cur_voicing_pitches)
-        break
+        cur_voicing_pitches = [[pretty_midi.note_name_to_number(note) for note in chord] for chord in cur_voicing_strs]
+        idx_to_pitch[idx] = cur_voicing_pitches
+
+    return idx_to_pitch
 
 def gen_result_midis(state_seqs, durations, state_indices, res_folder, fstub):
     for seq,durs in zip(state_seqs, durations): 
@@ -381,8 +380,8 @@ def gen_harmonization_csv():
     df.to_csv('./results/mechanicalturk_csvs/input.csv', index=False)  
 
 
-def voicings_to_MIDI_durations(voicing_seq, dur_seq, dir, desired_fstub='seqmid', note_dur=1): 
-    desired_filename = get_free_filename(desired_fstub, '.mid', directory=dir)
+def voicings_to_MIDI_durations(idx, voicing_seq, dur_seq, dir, desired_fstub='seqmid', note_dur=1): 
+    desired_filename = '{}/{}-{}{}'.format(str(dir), desired_fstub, idx, '.mid')
     # Create a PrettyMIDI object
     midi_obj = pretty_midi.PrettyMIDI() # init tempo is 120, so a quarter note is 0.5 sec
     # Create an Instrument instance for a cello instrument
@@ -407,6 +406,7 @@ def melodies_to_MIDI_durations(mel_seq, dur_seq, dir, desired_fstub='seqmid', no
     piano = pretty_midi.Instrument(program=1)
     cur_time = 0
     for notes, dur in zip(mel_seq, dur_seq):
+        print(notes)
         if len(notes)==1:
             if notes[0] == -1 : 
                 break
@@ -422,7 +422,19 @@ def melodies_to_MIDI_durations(mel_seq, dur_seq, dir, desired_fstub='seqmid', no
     return desired_filename, midi_obj
 
 if __name__ == "__main__":
-    idx_to_pitch_num()
+    idx_to_pitch = idx_to_pitch_num()
+    with open('./data/jsb_maj_durations.yaml') as file:
+        durations = yaml.safe_load(file)
+    test_durations = durations['test']
+
+    doodle_dir = './results/human_eval/doodle/'
+
+    midis_to_wavs(doodle_dir)
+        
+    for idx in idx_to_pitch.keys():
+        new_mid, new_pm = voicings_to_MIDI_durations(idx, idx_to_pitch[idx], test_durations[idx], doodle_dir, desired_fstub='doodle', note_dur=1)
+        midi_to_wav(new_mid)
+
     sys.exit(0)
 
     indices = [0,2,17, 18, 19, 25, 27, 28, 41, 43,
@@ -430,12 +442,11 @@ if __name__ == "__main__":
                112, 117, 119, 122, 145, 157, 158, 160,179, 183, 
                189, 205, 223, 239, 244, 245, 247, 248, 258, 263, 
                270, 273, 275, 276, 280, 296, 305, 311, 315, 317]
-    
+
     with open('./data/jsb_maj_melodies.yaml') as file:
         melodies = yaml.safe_load(file)
 
-    with open('./data/jsb_maj_durations.yaml') as file:
-        durations = yaml.safe_load(file)
+    
 
     test_mels = melodies['test']
     test_durations = durations['test']
