@@ -230,14 +230,15 @@ def harmonizationTraining(n_epochs):
     train_melodies = all_melodies['train'] #[[[76,74],[74],[72],[74],[76,76],[76],[76],[-1]]]
     test_melodies = all_melodies['test']
 
+    model_name = "harmmodelfinal_"
     harmonization_agent = HarmonizationModel(gamma=0.95, alpha=0.1, checkpoint=CHECKPOINT) # define model
-    rewards, completed_epochs = harmonization_agent.prepModel('./models/harmmodel_*.p')
+    rewards, completed_epochs = harmonization_agent.prepModel(model_name)
 
     print("COMPLETED EPOCHS:", completed_epochs, n_epochs)
 
     # handle out-of-range melodies!
     harmonization_epoch_rewards = harmonization_agent.trainAgent(train_melodies, num_epochs=n_epochs, epoch_rewards=rewards)
-    harmonization_agent.saveModel('./models/harmmodel_newdata_' + DATESTR + '.p', n_epochs, harmonization_epoch_rewards)
+    harmonization_agent.saveModel(len(harmonization_epoch_rewards), harmonization_epoch_rewards)
 
     plotRewards(harmonization_epoch_rewards, 'HARMONIZATION', './results/harmonization_results/training_reward_' + DATESTR +'.png')
 
@@ -251,14 +252,15 @@ def voicingTraining(n_epochs, train=True):
     test_progs = chord_progressions['test']
 
 
+    model_name = 'voicingmodelfinal_'
     voicing_agent = VoicingModel(checkpoint=CHECKPOINT)
-    rewards, completed_epochs = voicing_agent.prepModel('./models/voicingmodel_*.p')
+    rewards, completed_epochs = voicing_agent.prepModel(model_name)
 
     print("COMPLETED EPOCHS:", completed_epochs, n_epochs)
 
     if train: 
         voicing_epoch_rewards = voicing_agent.trainAgent(train_progs, num_epochs=n_epochs, epoch_rewards=rewards)
-        voicing_agent.saveModel('./models/voicemodel'+DATESTR+'.p',n_epochs, voicing_epoch_rewards)
+        voicing_agent.saveModel(len(voicing_epoch_rewards), voicing_epoch_rewards)
 
         plotRewards(voicing_epoch_rewards, 'VOICING', './results/voicing_results/training_reward_' + DATESTR +'.png')
 
@@ -272,11 +274,13 @@ def freeTraining(n_epochs):
     with open('./data/jsb_maj_orig_voicings.yaml', 'r') as file:
         voicings = yaml.safe_load(file)
 
+    model_name = "freemodelfinal_"
+
     free_agent = FreeModel(checkpoint=5000)
-    rewards, completed_epochs = free_agent.prepModel('./models/voicemodel_*.p')
+    rewards, completed_epochs = free_agent.prepModel(model_name)
 
     free_epoch_rewards = free_agent.trainAgent(num_epochs=n_epochs, epoch_rewards=rewards, voicings=voicings['train'])
-    free_agent.saveModel('./models/freemodel'+DATESTR+'.p',n_epochs,free_epoch_rewards)
+    free_agent.saveModel(len(free_epoch_rewards), free_epoch_rewards)
 
     plotRewards(free_epoch_rewards, 'FREE', './results/free_results/training_reward_' + DATESTR + '.png')
 
@@ -291,11 +295,11 @@ if __name__ == "__main__":
     num_runs = 50
 
     #print("Start harmonization training loop")
-    #harmonizationTraining(n_epochs)
+    harmonizationTraining(n_epochs)
     #print("Start voicing training loop")
-    #voicingTraining(n_epochs, train=True)
+    voicingTraining(n_epochs, train=True)
     #print("Start free training loop")
-    #freeTraining(n_epochs)
+    freeTraining(n_epochs)
 
     #bachEval()
     harmonizationEval(num_runs)

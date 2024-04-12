@@ -15,11 +15,10 @@ def flipCoin(p):
   return r < p 
 
 class Qlearner():
-    def __init__(self, alpha=0.1, gamma=.9, epsilon_init=0.5, epsilon_end=0.05):
+    def __init__(self, alpha=0.1, gamma=.9, epsilon_init=0.5, epsilon_end=0.0, epochs=10000):
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon_init = epsilon_init 
-        self.epsilon = epsilon_init
         self.epsilon_end = epsilon_end
         self.Qvalues = 0 # some matrix
 
@@ -34,12 +33,15 @@ class Qlearner():
 
         self.Qvalues = np.zeros((self.numStates,self.numStates))
 
-    def saveModel(self, modelpath, epochs, rewards): # saved model is just a matrix of the Q values :)
+    def saveModel(self, epochs, rewards): # saved model is just a matrix of the Q values :)
         data = {
             "Q": self.Qvalues,
             "epochs": epochs,
             "rewards": rewards
         }
+
+        modelpath = './models/'+ self.model_name + datetime.today().strftime("%m_%d") + '_' + str(epochs) + '.p'
+
         with open(modelpath, 'wb') as f:
             pickle.dump(data, f)
         #np.save(modelpath, self.Qvalues)
@@ -51,13 +53,17 @@ class Qlearner():
         return data['rewards'], data['epochs']
         #self.Qvalues = np.load(modelpath)
     
-    def prepModel(self, path_form):
+    def prepModel(self, model_name):
         epoch_rewards, completed_epochs = [],0
+        path_form = './models/' + model_name + '*.p'
         list_of_files = glob.glob(path_form) # * means all if need specific format then *.csv
         if len(list_of_files) !=0:
             latest_file = max(list_of_files, key=os.path.getctime)
+            print(latest_file)
             epoch_rewards, completed_epochs = self.loadModel(latest_file)
-        return epoch_rewards, completed_epochs
+        
+        self.model_name = model_name
+        return epoch_rewards, completed_epochs, latest_file
     
     def getQValue(self, state, next_state):
         return self.Qvalues[(state,next_state)]
@@ -135,15 +141,16 @@ class VoicingModel(Qlearner):
         return self.chord_dict[context]
                 
     def trainAgent(self, chord_progressions, num_epochs=1000, epoch_rewards=[]):
-        epoch_reward=0
+        self.alpha_steps = [self.alpha*np.log(step) for step in np.linspace(np.e, 1, num_epochs)]
         print("CHECKPOINT", self.checkpoint)
         for i in tqdm(range(len(epoch_rewards)+1,num_epochs)):
             # will start close to epsilon_init and move closer to epsilon_end as i increases
+            epoch_reward = 0
+            self.alpha = self.alpha_steps[i]
             self.epsilon = (self.epsilon_init-self.epsilon_end)*((num_epochs - i)/num_epochs) + self.epsilon_end
             if i%self.checkpoint == 0:
                 print("epoch:", i, epoch_reward)
-                self.saveModel('./models/voicingmodel_' + datetime.today().strftime("%m_%d") + '_' + str(i) + '.p', i, epoch_rewards)
-            epoch_reward = 0
+                self.saveModel(i, epoch_rewards)
             for chord_prog in chord_progressions:
                 for j, c in enumerate(chord_prog):
                     if chord_prog[j+1] == -1: # DONE WITH LOOP!
@@ -295,8 +302,10 @@ class HarmonizationModel(Qlearner):
         return legal_chords
 
     def trainAgent(self, melodies, num_epochs=1000, epoch_rewards=[]):
+        self.alpha_steps = [self.alpha*np.log(step) for step in np.linspace(np.e, 1, num_epochs)]
         for i in tqdm(range(len(epoch_rewards)+1,num_epochs)):
             epoch_reward=0
+            self.alpha = self.alpha_steps[i]
             self.epsilon = (self.epsilon_init-self.epsilon_end)*((num_epochs - i)/num_epochs) + self.epsilon_end
             for melody in melodies:
                 for j, c in enumerate(melody):
@@ -319,7 +328,7 @@ class HarmonizationModel(Qlearner):
             
             if i%self.checkpoint == 0:
                 print("epoch:", i, epoch_reward)
-                self.saveModel('./models/harmmodel_' + datetime.today().strftime("%m_%d") + '_' + str(i) + '.p', i, epoch_rewards)
+                self.saveModel(i, epoch_rewards)
 
             epoch_rewards.append(epoch_reward)
         return epoch_rewards
@@ -470,14 +479,15 @@ class FreeModel(Qlearner): # uses default getLegalActions
         self.checkpoint = checkpoint
 
     def trainAgent(self, num_epochs=5000, epoch_rewards=[], voicings=None):
+        self.alpha_steps = [self.alpha*np.log(step) for step in np.linspace(np.e, 1, num_epochs)]
         # voicings are passed in just to provide episodes/episode lengths consistent with other model runs
-        epoch_reward=0
         for i in tqdm(range(len(epoch_rewards)+1,num_epochs)):
+            epoch_reward=0
+            self.alpha = self.alpha_steps[i]
             self.epsilon = (self.epsilon_init-self.epsilon_end)*((num_epochs - i)/num_epochs) + self.epsilon_end
             if i%self.checkpoint == 0:
                 print("epoch:", i, epoch_reward)
-                self.saveModel('./models/freemodel_' + datetime.today().strftime("%m_%d") + '_' + str(i) + '.p', i, epoch_rewards)
-            epoch_reward=0
+                self.saveModel(i, epoch_rewards)
             for v in voicings: 
                 for j in range(len(v)):
                     if j == 0:
