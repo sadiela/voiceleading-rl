@@ -6,12 +6,12 @@ We implement three models each designed to accomplish a slightly different task:
 ## Voicing Model: 
 1. Harmonic progression is provided, algorithm need only provide the voicings
 2. We consider only harmonic progressions in the key of C major
-3. We restruct the range of each part
+3. We restrict the range of each part
 
 ## Free Model 
 1. Algorithm provides the voicings as well as a chord progression
 2. We consider only harmonic progressions in the key of C major
-3. We restruct the range of each part
+3. We restrict the range of each part
 
 ## Melody Harmonizaton Model 
 1. Algorithm is provided a melody. It picks chords (with proper voice leading) that fits the given input. 
